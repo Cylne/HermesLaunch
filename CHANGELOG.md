@@ -1,25 +1,20 @@
 # Changelog
 
-## [1.1.0] - 2026-08-28
+## [1.2.0] - 2026-08-28
 
 ### Added
-- Branding **HermesLaunch**.
-- One-command `bootstrap.sh`.
-- Single interactive wizard for Telegram + custom AI provider.
-- Automatic `/models` discovery.
-- Mandatory Telegram numeric-ID allowlist.
-- VPS systemd gateway installation.
-- `hermeslaunch` management command.
-- Full Hermes backup/restore wrapper.
-- Android Termux remote-VPS tutorial.
-- Provider, migration, command, and publishing guides.
-- GitHub Actions shell validation.
-- Release builder with SHA-256 checksums.
+- Separate VPS Mode and native Android/Termux Mobile Mode.
+- `install-vps.sh` for systemd deployments.
+- `install-termux.sh` for no-VPS Android deployments.
+- Auto-dispatching `install.sh` and `bootstrap.sh`.
+- Termux tmux gateway manager using `hermes gateway run`.
+- Optional wake-lock integration and Termux:Boot helper.
+- Dedicated Termux documentation.
 
-### Security
-- Secrets stored in `~/.hermes/.env` with mode `0600`.
-- Remote plain-HTTP provider endpoints rejected.
-- Open Telegram access intentionally unsupported.
+### Changed
+- Canonical repository: `https://github.com/Cylne/HermesLaunch.git`.
+- README now explicitly treats VPS and Termux as different environments.
+- Termux is documented as best-effort, while VPS is the stable 24/7 path.
 
 ### Credits
 Created by **Reii**.

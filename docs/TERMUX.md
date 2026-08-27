@@ -1,155 +1,162 @@
-# 📱 Tutorial Termux — HermesLaunch
+# 📱 HermesLaunch — Termux Mobile Mode
 
-> HermesLaunch v1.1.0 menggunakan **Termux sebagai remote control untuk VPS**, bukan menjalankan gateway production langsung di Android.
+This guide is specifically for **running Hermes directly on Android via Termux without a VPS**.
 
-Hermes Agent memang memiliki dukungan Android/Termux, tetapi statusnya Tier 2. Untuk bot Telegram 24/7, VPS Linux + systemd lebih stabil.
+Hermes' official Android path supports a native Termux install. HermesLaunch therefore does **not** require Ubuntu/proot.
 
-## 1. Install Termux
+## Architecture
 
-Gunakan build Termux yang masih aktif (misalnya F-Droid/GitHub resmi Termux), lalu buka aplikasinya.
-
-## 2. Update package
-
-```bash
-pkg update -y && pkg upgrade -y
+```text
+Android
+  ↓
+Termux
+  ↓
+Hermes Agent
+  ↓
+tmux background session
+  ↓
+hermes gateway run
+  ↓
+Telegram
 ```
 
-## 3. Install SSH + curl + git
+## 1. Prepare Termux
 
 ```bash
-pkg install -y openssh curl git
+pkg update -y
+pkg upgrade -y
+pkg install -y git curl
 ```
 
-Opsional, aktifkan akses storage:
+## 2. Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```
+
+HermesLaunch automatically selects `install-termux.sh`.
+
+## 3. Provider setup
+
+The Termux installer launches:
+
+```bash
+hermes model
+```
+
+Use the Hermes provider wizard normally.
+
+## 4. Telegram setup
+
+Then HermesLaunch launches:
+
+```bash
+hermes gateway setup
+```
+
+Choose Telegram and enter:
+
+- Bot Token from `@BotFather`
+- numeric Telegram User ID
+
+Do not leave access open to everyone.
+
+## 5. Gateway runtime
+
+Hermes recommends the foreground gateway command for Termux:
+
+```bash
+hermes gateway run
+```
+
+HermesLaunch keeps that command in a `tmux` session named:
+
+```text
+hermeslaunch-gateway
+```
+
+Manage it with:
+
+```bash
+hermeslaunch status
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch logs
+```
+
+## 6. Android background limitation
+
+Android can suspend Termux background jobs.
+
+Recommended Android-side settings:
+
+- Battery → Termux → Unrestricted / Don't optimize
+- allow background/autostart if your ROM exposes it
+- don't force-stop Termux
+
+HermesLaunch attempts `termux-wake-lock` when that command is available.
+
+This remains **best-effort** and is not equivalent to a VPS systemd service.
+
+## 7. Termux:Boot
+
+The installer can create:
+
+```text
+~/.termux/boot/hermeslaunch-gateway.sh
+```
+
+You still need the separate Termux:Boot application.
+
+It attempts to start HermesLaunch after Android reboot, but Android can still kill background processes later.
+
+## 8. Workspace
+
+Recommended local workspace:
+
+```text
+~/Reii
+```
+
+For Android Download access:
 
 ```bash
 termux-setup-storage
 ```
 
-## 4. Login ke VPS
+Copy a project:
 
 ```bash
-ssh root@IP_VPS
+cp -r ~/Reii/NamaProject ~/storage/downloads/
 ```
 
-Contoh:
-
-```bash
-ssh root@203.0.113.10
-```
-
-Masukkan password VPS saat diminta.
-
-> Kalau prompt berubah dari `~ $` menjadi `root@nama-vps:~#`, berarti kamu sudah berada di VPS.
-
-## 5. Jalankan HermesLaunch di VPS
-
-Setelah repo dipublish:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/__GITHUB_REPO__/main/bootstrap.sh | bash
-```
-
-Wizard akan meminta:
-
-1. Telegram Bot Token
-2. Telegram numeric User ID
-3. Nama provider
-4. Base URL API
-5. API Key
-6. API compatibility mode
-7. Model ID
-8. Context length (opsional)
-9. Workspace project
-
-## 6. Setelah selesai
-
-Cek:
-
-```bash
-hermeslaunch status
-```
-
-Pantau log:
-
-```bash
-hermeslaunch logs
-```
-
-Restart:
-
-```bash
-hermeslaunch restart
-```
-
-## 7. Ambil project VPS ke Android
-
-Contoh project berada di:
-
-```text
-/root/Reii/NamaProject
-```
-
-Keluar dari SSH:
-
-```bash
-exit
-```
-
-Pastikan prompt Termux kembali menjadi:
-
-```text
-~ $
-```
-
-Kemudian:
-
-```bash
-scp -r root@IP_VPS:/root/Reii/NamaProject ~/storage/downloads/
-```
-
-Hasilnya masuk ke folder **Download** Android.
-
-Untuk ZIP:
-
-```bash
-scp root@IP_VPS:/root/Reii/NamaProject.zip ~/storage/downloads/
-```
-
-## 8. Backup Hermes dari VPS ke Android
-
-Di VPS:
+## 9. Backup
 
 ```bash
 hermeslaunch backup ~/hermes-backup.zip
 ```
 
-Keluar dari SSH lalu:
+Copy it to Android Download:
 
 ```bash
-scp root@IP_VPS:~/hermes-backup.zip ~/storage/downloads/
+cp ~/hermes-backup.zip ~/storage/downloads/
 ```
 
-⚠️ Backup penuh Hermes berisi API key, Bot Token, auth, session, memory, dan konfigurasi. Jangan upload ke tempat publik.
+⚠️ The backup contains sensitive Hermes data and credentials.
 
-## 9. Pindah ke VPS baru
+## 10. Termux vs VPS
 
-Upload backup dari Android:
+| | Termux | VPS |
+|---|---|---|
+| VPS needed | No | Yes |
+| Ubuntu/proot | No | N/A |
+| Supervisor | tmux | systemd |
+| Gateway command | `hermes gateway run` | system service |
+| Reboot persistence | optional Termux:Boot | native systemd |
+| 24/7 reliability | best-effort | recommended |
+| Android can terminate runtime | yes | no |
 
-```bash
-scp ~/storage/downloads/hermes-backup.zip root@IP_VPS_BARU:~/
-```
+Repository: https://github.com/Cylne/HermesLaunch.git
 
-Login:
-
-```bash
-ssh root@IP_VPS_BARU
-```
-
-Install HermesLaunch, lalu:
-
-```bash
-hermeslaunch restore ~/hermes-backup.zip
-```
-
-Selesai.
+Credits: Reii

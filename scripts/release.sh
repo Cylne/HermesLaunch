@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="$(cat "$ROOT/VERSION")"
+VERSION="$(tr -d '\r\n' < "$ROOT/VERSION")"
 NAME="HermesLaunch-v$VERSION"
 DIST="$ROOT/dist"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
 
 rm -rf "$DIST"
-mkdir -p "$DIST"
+mkdir -p "$DIST" "$TMP/$NAME"
 
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-
-mkdir -p "$tmp/$NAME"
-rsync -a \
-  --exclude '.git' \
-  --exclude 'dist' \
-  --exclude '.env' \
-  --exclude '*.log' \
-  "$ROOT/" "$tmp/$NAME/"
+cp -a "$ROOT/." "$TMP/$NAME/"
+rm -rf "$TMP/$NAME/.git" "$TMP/$NAME/dist"
+find "$TMP/$NAME" \( -name '.env' -o -name '.env.*' \) -type f -delete
 
 (
-  cd "$tmp"
+  cd "$TMP"
   zip -qr "$DIST/$NAME.zip" "$NAME"
   tar -czf "$DIST/$NAME.tar.gz" "$NAME"
 )
@@ -32,5 +27,4 @@ rsync -a \
 
 echo "Release built:"
 ls -lh "$DIST"
-echo
 cat "$DIST/CHECKSUMS.sha256"

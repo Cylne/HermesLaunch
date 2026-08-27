@@ -1,32 +1,43 @@
 # ⌨️ HermesLaunch Commands
 
-| Command | Fungsi |
-|---|---|
-| `hermeslaunch status` | Status Hermes Gateway |
-| `hermeslaunch logs` | Live log gateway |
-| `hermeslaunch start` | Start gateway |
-| `hermeslaunch stop` | Stop gateway |
-| `hermeslaunch restart` | Restart gateway |
-| `hermeslaunch doctor` | Diagnostics Hermes |
-| `hermeslaunch model` | Provider/model wizard Hermes |
-| `hermeslaunch config` | Lihat config Hermes |
-| `hermeslaunch backup [file]` | Full backup |
-| `hermeslaunch restore <file>` | Restore backup |
-| `hermeslaunch update` | Update Hermes + backup |
-| `hermeslaunch version` | Versi HermesLaunch + Hermes |
+## VPS Mode
 
-## Telegram
+VPS commands control the systemd Hermes Gateway installed by `install-vps.sh`.
 
-Command Telegram berasal dari Hermes sendiri. Yang paling umum:
+```bash
+hermeslaunch status
+hermeslaunch logs
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch doctor
+hermeslaunch model
+hermeslaunch backup
+hermeslaunch restore
+```
+
+## Termux Mobile Mode
+
+Termux commands control a local `tmux` session running `hermes gateway run`.
+
+```bash
+hermeslaunch status
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch logs
+hermeslaunch doctor
+hermeslaunch model
+hermeslaunch gateway-setup
+hermeslaunch backup
+hermeslaunch restore
+hermeslaunch update
+hermeslaunch version
+```
+
+The command names may look similar, but the supervisors are intentionally different:
 
 ```text
-/model
-/status
-/new
-/sessions
-/usage
-/stop
-/approve
-/deny
-/commands
+VPS    = systemd
+Termux = tmux
 ```

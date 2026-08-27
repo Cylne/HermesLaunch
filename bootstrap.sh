@@ -1,29 +1,26 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO="${HERMESLAUNCH_REPO:-__GITHUB_REPO__}"
+REPO="${HERMESLAUNCH_REPO:-Cylne/HermesLaunch}"
 REF="${HERMESLAUNCH_REF:-main}"
+BASE="https://raw.githubusercontent.com/${REPO}/${REF}"
 
-if [[ "$REPO" == "__GITHUB_REPO__" ]]; then
-  cat >&2 <<'EOF'
-HermesLaunch belum dikonfigurasi dengan alamat repository GitHub.
+is_termux() {
+  [[ -n "${TERMUX_VERSION:-}" ]] || [[ "${PREFIX:-}" == *"com.termux"* ]] || [[ "$(uname -o 2>/dev/null || true)" == "Android" ]]
+}
 
-Pemilik repo:
-  jalankan scripts/set-repo.sh USERNAME/HermesLaunch sebelum publish.
+TMPDIR_HL="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR_HL"' EXIT
 
-User:
-  gunakan:
-  HERMESLAUNCH_REPO=OWNER/REPO bash bootstrap.sh
-EOF
-  exit 2
+if is_termux; then
+  TARGET="install-termux.sh"
+  echo "HermesLaunch: Android / Termux Mobile Mode"
+else
+  TARGET="install-vps.sh"
+  echo "HermesLaunch: Linux VPS Mode"
 fi
 
-URL="https://raw.githubusercontent.com/${REPO}/${REF}/install.sh"
-TMP="$(mktemp)"
-trap 'rm -f "$TMP"' EXIT
-
-echo "HermesLaunch bootstrap"
-echo "Source: $URL"
-curl -fsSL "$URL" -o "$TMP"
-chmod 700 "$TMP"
-bash "$TMP"
+echo "Repository: https://github.com/${REPO}.git"
+curl -fsSL "${BASE}/${TARGET}" -o "${TMPDIR_HL}/${TARGET}"
+chmod 700 "${TMPDIR_HL}/${TARGET}"
+bash "${TMPDIR_HL}/${TARGET}"

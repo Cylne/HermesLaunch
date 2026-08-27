@@ -2,347 +2,326 @@
 
 # 🚀 HermesLaunch
 
-### Hermes VPS Deployment & Management Toolkit
+### Hermes Agent Deployment Toolkit for Linux VPS & Android Termux
 
-**Install Hermes Agent, connect Telegram, configure an AI provider, and run the gateway 24/7 — from one guided installer.**
+**One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](#)
-[![Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?logo=gnu-bash&logoColor=white)](#)
-[![Platform](https://img.shields.io/badge/platform-Linux%20VPS-FCC624?logo=linux&logoColor=black)](#)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
+[![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Created by Reii**
+
+[Repository](https://github.com/Cylne/HermesLaunch) · [Termux Guide](docs/TERMUX.md) · [Commands](docs/COMMANDS.md) · [Security](SECURITY.md)
 
 </div>
 
 ---
 
-## ✨ What is HermesLaunch?
+## ✨ About
 
-HermesLaunch adalah deployment wrapper independen untuk membantu user memasang **Hermes Agent** di VPS tanpa mengulang setup manual satu per satu.
+HermesLaunch adalah deployment/management wrapper independen untuk **Hermes Agent**.
+
+Tujuannya sederhana: satu repository yang membuat pemasangan Hermes + Telegram lebih praktis, tetapi **tidak menyamakan VPS dan Android Termux**.
 
 ```text
-Android / PC
-     │
-     │ SSH / Telegram
-     ▼
-┌───────────────────────┐
-│      Linux VPS        │
-│                       │
-│  HermesLaunch         │
-│       ↓               │
-│  Hermes Agent         │
-│       ↓               │
-│  Telegram Gateway     │
-│       ↓               │
-│  AI Provider          │
-└───────────────────────┘
+                        HermesLaunch
+                             │
+               ┌─────────────┴─────────────┐
+               │                           │
+        🖥 Linux VPS                📱 Android Termux
+        VPS Mode                    Mobile Mode
+               │                           │
+        systemd service              native Termux
+        boot-time service            tmux background
+        target 24/7                  best-effort
+               │                           │
+               └──────────┬────────────────┘
+                          ▼
+                    Hermes Agent
+                          │
+                    Telegram Bot
+                          │
+                    AI Provider
 ```
 
-HermesLaunch tidak mengganti atau memodifikasi source Hermes Agent. Hermes tetap diinstall menggunakan installer resmi Hermes.
-
-> **Independent project:** HermesLaunch bukan software resmi Nous Research dan tidak berafiliasi dengan Nous Research.
+> HermesLaunch is independent and is not affiliated with or endorsed by Nous Research.
 
 ---
 
-## ⚡ One-Command Install
+# ⚡ One-Line Install
 
-Setelah repo ini dipublish dan placeholder repo sudah dikonfigurasi:
+Repository:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/__GITHUB_REPO__/main/bootstrap.sh | bash
+```text
+https://github.com/Cylne/HermesLaunch.git
 ```
 
-Atau metode yang lebih transparan:
+Command yang sama bisa dijalankan dari VPS atau Termux:
 
 ```bash
-git clone https://github.com/__GITHUB_REPO__.git
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```
+
+`bootstrap.sh` mendeteksi environment dan mengambil installer yang sesuai:
+
+```text
+Linux VPS       → install-vps.sh
+Android Termux  → install-termux.sh
+```
+
+Atau clone manual:
+
+```bash
+git clone https://github.com/Cylne/HermesLaunch.git
 cd HermesLaunch
 bash install.sh
 ```
 
-> Untuk production/security-sensitive server, inspect script sebelum menjalankan `curl | bash`.
-
 ---
 
-## 🧙 Setup Wizard
+# 🖥 VPS Mode
 
-HermesLaunch meminta data hanya dalam satu flow:
+**Untuk deployment always-on / production-style.**
 
 ```text
-╭──────────────────────────────────────────────╮
-│               HermesLaunch                   │
-│     VPS Deployment & Management Toolkit      │
-│                                              │
-│               Created by Reii                │
-╰──────────────────────────────────────────────╯
+Linux VPS
+   ↓
+HermesLaunch
+   ↓
+Hermes Agent
+   ↓
+systemd
+   ↓
+Telegram Gateway
+```
 
-1/3 — Telegram
-Bot Token:
-Telegram numeric User ID:
-Home Channel:
+### Characteristics
 
-2/3 — AI Provider
-Provider name:
-API Base URL:
-API Key:
-API Compatibility:
-Detected models:
-Default Model:
-Context Length:
+- Linux VPS + `systemd`
+- root/sudo
+- Hermes Gateway sebagai system service
+- auto-start setelah reboot
+- cocok untuk bot Telegram 24/7
+- HP/Termux boleh ditutup
 
-3/3 — Workspace
-Project folder:
+### Install
+
+```bash
+ssh root@IP_VPS
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
 ```
 
 Setelah selesai:
 
-```text
-✓ Hermes installed
-✓ Telegram configured
-✓ User allowlist configured
-✓ AI provider configured
-✓ Workspace created
-✓ Gateway installed as system service
-✓ Auto-start on boot
-✓ Management command installed
+```bash
+hermeslaunch status
+hermeslaunch logs
 ```
 
 ---
 
-## 🔥 Features
+# 📱 Termux Mobile Mode — No VPS
 
-| Feature | Status |
-|---|:---:|
-| Official Hermes installer | ✅ |
-| Telegram Bot setup | ✅ |
-| Mandatory user allowlist | ✅ |
-| Custom AI provider | ✅ |
-| OpenAI Chat Completions | ✅ |
-| Responses / Codex mode | ✅ |
-| Anthropic Messages proxy | ✅ |
-| `/models` discovery | ✅ |
-| 9Router/local gateway friendly | ✅ |
-| Workspace isolation guidance | ✅ |
-| systemd 24/7 gateway | ✅ |
-| Auto-start after reboot | ✅ |
-| Backup / Restore | ✅ |
-| VPS migration workflow | ✅ |
-| Termux Android guide | ✅ |
-| Secret file mode `0600` | ✅ |
+**Hermes berjalan langsung di Android.**
 
----
+Termux Mode bukan VPS Mode yang dibungkus Ubuntu/proot.
 
-## 📋 Requirements
+```text
+Android
+   ↓
+Termux native
+   ↓
+Hermes Agent
+   ↓
+tmux
+   ↓
+hermes gateway run
+   ↓
+Telegram
+```
 
-Recommended:
+### Tidak butuh
 
-- Ubuntu / Debian VPS
-- systemd
-- root or sudo access
-- Internet connection
-- Telegram account
-- Bot created via `@BotFather`
-- Numeric Telegram User ID
-- AI provider endpoint + API key + model
+```text
+❌ VPS
+❌ Ubuntu proot
+❌ systemd
+```
 
-Hermes itself supports more Linux distributions; HermesLaunch uses the tools available on common VPS distributions and checks for systemd.
+### Menggunakan
 
----
+```text
+✅ Termux native
+✅ installer Hermes Termux-aware
+✅ tmux
+✅ hermes gateway run
+✅ optional wake-lock
+✅ optional Termux:Boot helper
+```
 
-## 📱 Android / Termux
-
-HermesLaunch is designed so kamu bisa mengelola VPS sepenuhnya dari Android.
-
-Quick start:
+### Install
 
 ```bash
 pkg update -y
-pkg install -y openssh curl git
-ssh root@IP_VPS
+pkg install -y git curl
+
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
 ```
 
-Kemudian jalankan HermesLaunch **di VPS**, bukan di shell Termux lokal.
+Termux installer kemudian menjalankan wizard resmi Hermes untuk:
 
-📖 Full tutorial: **[docs/TERMUX.md](docs/TERMUX.md)**
+1. provider/model;
+2. Telegram Gateway;
+3. Bot Token;
+4. Telegram numeric User ID.
 
----
-
-## 🔌 AI Providers
-
-HermesLaunch dapat mengkonfigurasi named custom provider Hermes.
-
-Contoh OpenAI-compatible:
-
-```text
-Provider : MyAPI
-Base URL : https://api.example.com/v1
-Mode     : Chat Completions
-Model    : my-coding-model
-```
-
-Contoh 9Router lokal:
-
-```text
-Provider : 9Router
-Base URL : http://127.0.0.1:20128/v1
-Mode     : Chat Completions
-```
-
-Remote plain HTTP sengaja ditolak. HTTP hanya diperbolehkan untuk loopback.
-
-📖 Provider guide: **[docs/PROVIDERS.md](docs/PROVIDERS.md)**
-
----
-
-## 🛠 Management Commands
+Setelah setup:
 
 ```bash
 hermeslaunch status
 hermeslaunch logs
-hermeslaunch start
-hermeslaunch stop
+```
+
+### ⚠️ Termux is best-effort
+
+Android bisa suspend/kill background process. Karena itu Termux tidak boleh didokumentasikan sebagai setara dengan systemd VPS.
+
+Untuk membantu:
+
+- nonaktifkan battery optimization Termux;
+- izinkan background/autostart bila ROM mendukung;
+- jangan force-stop Termux;
+- wake-lock dipakai bila tersedia;
+- Termux:Boot helper bersifat opsional.
+
+Jika target utama adalah uptime stabil 24/7, gunakan **VPS Mode**.
+
+📖 [Tutorial Termux lengkap](docs/TERMUX.md)
+
+---
+
+# 🔥 VPS vs Termux
+
+| Capability | 🖥 VPS Mode | 📱 Termux Mode |
+|---|:---:|:---:|
+| Hermes CLI | ✅ | ✅ |
+| Telegram Gateway | ✅ | ✅ |
+| AI Provider | ✅ | ✅ |
+| Project workspace | ✅ | ✅ |
+| VPS required | ✅ | ❌ |
+| Ubuntu/proot on Android | — | ❌ |
+| Supervisor | systemd | tmux |
+| Boot persistence | ✅ native | ⚠️ Termux:Boot helper |
+| Android can kill process | ❌ | ✅ |
+| Docker isolation | possible | ❌ |
+| 24/7 reliability target | ✅ | best-effort |
+
+---
+
+# 🛠 HermesLaunch Commands
+
+### VPS
+
+```bash
+hermeslaunch status
+hermeslaunch logs
 hermeslaunch restart
 hermeslaunch doctor
 hermeslaunch model
-hermeslaunch config
 hermeslaunch backup
-hermeslaunch restore backup.zip
-hermeslaunch update
-hermeslaunch version
+hermeslaunch restore
 ```
 
-📖 Full command reference: **[docs/COMMANDS.md](docs/COMMANDS.md)**
+### Termux
+
+```bash
+hermeslaunch status
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch logs
+hermeslaunch doctor
+hermeslaunch model
+hermeslaunch gateway-setup
+hermeslaunch backup
+hermeslaunch restore
+```
+
+Underlying runtime intentionally berbeda:
+
+```text
+VPS    → systemd
+Termux → tmux + hermes gateway run
+```
 
 ---
 
-## 💾 Backup & VPS Migration
-
-VPS lama:
+# 💾 Backup / Migration
 
 ```bash
-hermeslaunch backup ~/hermes-migration.zip
+hermeslaunch backup ~/hermes-backup.zip
 ```
 
-Copy ke VPS baru:
+Restore:
 
 ```bash
-scp ~/hermes-migration.zip root@IP_VPS_BARU:~/
+hermeslaunch restore ~/hermes-backup.zip
 ```
 
-Setelah HermesLaunch terinstall di VPS baru:
-
-```bash
-hermeslaunch restore ~/hermes-migration.zip
-```
-
-📖 Migration guide: **[docs/MIGRATION.md](docs/MIGRATION.md)**
-
-> ⚠️ Full Hermes backup berisi credential. Jangan dipublish atau dibagikan.
+> Full Hermes backup dapat berisi API keys/Bot Token dan harus dianggap sebagai secret.
 
 ---
 
-## 🔐 Security
+# 🔐 Security
 
-HermesLaunch mengambil beberapa keputusan keamanan secara default:
-
-- Telegram allowlist wajib.
-- Bot open-access tidak ditawarkan.
-- Bot Token dan API key disimpan di `~/.hermes/.env`.
-- `.env` menggunakan permission `0600`.
-- Remote provider harus HTTPS.
-- Config lama dibackup sebelum diubah.
-- API key tidak ditampilkan ulang setelah setup.
-- Workspace mendapatkan `AGENTS.md` berisi guardrail dasar.
-
-### Root warning
-
-Hermes memiliki terminal tools. Jika dijalankan sebagai root, agent dapat memiliki akses root ke VPS.
-
-Untuk VPS pribadi ini sering praktis. Untuk lingkungan shared atau high-security, gunakan account Linux khusus dengan prinsip least privilege.
+- Telegram user allowlist tetap direkomendasikan/wajib saat setup.
+- Jangan publish `.env`.
+- Jangan publish Hermes backup.
+- Gunakan HTTPS untuk remote provider endpoints.
+- Hermes dengan terminal tools memiliki akses sesuai privilege OS tempat ia berjalan.
+- Root VPS berarti agent bisa memiliki privilege root.
 
 ---
 
-## 🧪 Development
-
-Validate scripts:
-
-```bash
-bash -n install.sh
-bash -n bootstrap.sh
-bash -n scripts/*.sh
-```
-
-Build release:
-
-```bash
-./scripts/release.sh
-```
-
-GitHub Actions juga menjalankan Bash syntax check dan ShellCheck.
-
----
-
-## 🚀 Publishing Your Fork
-
-Sebelum publish:
-
-```bash
-./scripts/set-repo.sh USERNAME/HermesLaunch
-```
-
-Lalu ikuti:
-
-**[docs/PUBLISHING.md](docs/PUBLISHING.md)**
-
----
-
-## 🗂 Project Structure
+# 📂 Structure
 
 ```text
 HermesLaunch/
 ├── install.sh
+├── install-vps.sh
+├── install-termux.sh
 ├── bootstrap.sh
-├── VERSION
 ├── README.md
 ├── SECURITY.md
 ├── CHANGELOG.md
 ├── LICENSE
-├── bin/
-│   └── hermeslaunch
+├── VERSION
 ├── docs/
 │   ├── TERMUX.md
 │   ├── PROVIDERS.md
 │   ├── COMMANDS.md
 │   ├── MIGRATION.md
 │   └── PUBLISHING.md
-├── scripts/
-│   ├── set-repo.sh
-│   └── release.sh
-└── .github/
-    ├── workflows/
-    │   └── shellcheck.yml
-    └── ISSUE_TEMPLATE/
-        └── bug_report.md
+└── scripts/
+    ├── release.sh
+    └── set-repo.sh
 ```
 
 ---
 
-## 🤝 Credits
+# 🤝 Credits
 
-**HermesLaunch** — Created by **Reii**
+**HermesLaunch — Created by Reii**
 
-Hermes Agent is a separate open-source project by **Nous Research**.
-
-HermesLaunch is an independent installer/management wrapper and is **not affiliated with or endorsed by Nous Research**.
-
----
+Hermes Agent is a separate project by Nous Research.
 
 <div align="center">
 
 ### HermesLaunch
 
-**Deploy once. Control from anywhere.**
+**VPS when you need uptime. Termux when you want it directly on Android.**
 
 Created by **Reii**
 

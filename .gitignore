@@ -1,0 +1,19 @@
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*backup*.zip
+
+# Release
+dist/
+*.tar.gz
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log

@@ -1,0 +1,26 @@
+name: Shell Validation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Bash syntax
+        run: |
+          bash -n install.sh
+          bash -n bootstrap.sh
+          bash -n scripts/set-repo.sh
+          bash -n scripts/release.sh
+      - name: ShellCheck
+        run: |
+          shellcheck -x install.sh bootstrap.sh scripts/set-repo.sh scripts/release.sh

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Development/source copy. install.sh writes the same manager to /usr/local/bin.
+exec /usr/local/bin/hermeslaunch "$@"

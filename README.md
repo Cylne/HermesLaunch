@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -78,6 +78,41 @@ git clone https://github.com/Cylne/HermesLaunch.git
 cd HermesLaunch
 bash install.sh
 ```
+
+
+---
+
+# 🧭 Apa yang Harus Diisi Saat Setup?
+
+| Field | Isi apa? | Contoh |
+|---|---|---|
+| **Bot Token** | Token bot dari `@BotFather` | `123456789:AA...` |
+| **Telegram numeric User ID** | ID angka akun yang boleh menggunakan bot. Ambil dari `@userinfobot` / `@get_id_bot` | `1447854280` |
+| **Home Channel Chat ID** | Tujuan default cron/notifikasi. Untuk DM pribadi **cukup tekan Enter** agar sama dengan User ID utama | `1447854280` |
+| **Home Channel grup** | Jika notifikasi mau ke grup/forum, gunakan Chat ID grup | `-1001234567890` |
+| **Provider Name** | Label provider agar gampang dikenali | `GodenAPI`, `OpenRouter`, `9Router` |
+| **API Base URL** | Base endpoint provider, biasanya `/v1` | `https://api.example.com/v1` |
+| **API Key** | Secret API key provider | input disembunyikan |
+| **Compatibility** | Untuk mayoritas OpenAI-compatible pilih `1` | `1` |
+| **Model ID** | ID model persis dari provider | `kimi-k2.5` |
+| **Context Length** | Opsional. Kalau tidak tahu tekan Enter | Enter |
+| **Workspace** | Folder default project Hermes | `/root/Reii` |
+
+### Contoh Telegram pribadi
+
+```text
+Telegram numeric User ID: 1447854280
+
+Home Channel = tujuan default cron/notifikasi.
+Kalau ingin masuk ke DM akun utama (1447854280), cukup tekan Enter.
+Home Channel Chat ID [1447854280]:
+```
+
+Pada baris terakhir **cukup tekan Enter**.
+
+`Home Channel` harus berupa **Chat ID angka** — bukan tulisan `ID`, bukan `@username`, dan bukan nama channel.
+
+Home channel dapat diganti kemudian dari Telegram menggunakan `/sethome`.
 
 ---
 

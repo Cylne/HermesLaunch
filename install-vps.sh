@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.2.0"
+HL_VERSION="1.2.1"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
@@ -39,7 +39,7 @@ is_termux() {
 
 termux_notice() {
 cat <<'EOF'
-HermesLaunch v1.2.0 ditujukan untuk VPS Linux + systemd.
+HermesLaunch v1.2.1 ditujukan untuk VPS Linux + systemd.
 
 Kamu sedang menjalankannya di Termux Android.
 Gunakan Termux sebagai SSH client:
@@ -106,8 +106,8 @@ setup_privileges() {
 }
 
 check_platform() {
-  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.2.0 hanya mendukung Linux VPS."
-  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.2.0 membutuhkan systemd."
+  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.2.1 hanya mendukung Linux VPS."
+  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.2.1 membutuhkan systemd."
   if is_termux; then
     termux_notice
     exit 2
@@ -285,17 +285,42 @@ PY
 wizard() {
   need_tty
   printf "\n${C_BOLD}1/3 — Telegram${C_RESET}\n" > /dev/tty
+  printf "${C_CYAN}ℹ Panduan Telegram:${C_RESET}\n" > /dev/tty
+  printf "  • Bot Token = token bot dari @BotFather.\n" > /dev/tty
+  printf "    Contoh format: 123456789:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n" > /dev/tty
+  printf "  • Numeric User ID = ID angka akun Telegram yang boleh memakai bot.\n" > /dev/tty
+  printf "    Ambil dari @userinfobot / @get_id_bot. BUKAN @username.\n" > /dev/tty
+  printf "  • Home Channel = chat default untuk cron/notifikasi Hermes.\n" > /dev/tty
+  printf "    Bot pribadi: cukup tekan Enter agar memakai User ID utama.\n" > /dev/tty
+  printf "    Grup/forum: isi Chat ID grup, biasanya -100xxxxxxxxxx.\n\n" > /dev/tty
 
   ask_secret TELEGRAM_TOKEN "Bot Token dari @BotFather"
   [[ -n "$TELEGRAM_TOKEN" ]] || die "Bot Token wajib diisi."
 
-  ask TELEGRAM_USERS "Telegram numeric User ID (comma-separated jika lebih dari satu)" ""
-  [[ "$TELEGRAM_USERS" =~ ^[0-9]+(,[0-9]+)*$ ]] || die "Telegram User ID harus berupa angka."
+  ask TELEGRAM_USERS "Telegram numeric User ID (contoh 1447854280; multi-user: 111,222)" ""
+  [[ "$TELEGRAM_USERS" =~ ^[0-9]+(,[0-9]+)*$ ]] || die "Telegram User ID harus berupa angka. Jangan gunakan @username."
   local first_user="${TELEGRAM_USERS%%,*}"
-  ask TELEGRAM_HOME "Home Channel/User ID" "$first_user"
+
+  printf "\n${C_CYAN}Home Channel${C_RESET} = tujuan default cron/notifikasi.\n" > /dev/tty
+  printf "Kalau ingin masuk ke DM akun utama (%s), cukup tekan Enter.\n" "$first_user" > /dev/tty
+  ask TELEGRAM_HOME "Home Channel Chat ID" "$first_user"
+
+  if [[ "$TELEGRAM_HOME" == "ID" || "$TELEGRAM_HOME" == "id" ]]; then
+    warn "Literal 'ID' bukan Chat ID. Otomatis memakai default $first_user."
+    TELEGRAM_HOME="$first_user"
+  fi
+  [[ "$TELEGRAM_HOME" =~ ^-?[0-9]+$ ]] || die "Home Channel harus Chat ID angka, misalnya $first_user atau -1001234567890."
 
   printf "\n${C_BOLD}2/3 — AI Provider${C_RESET}\n" > /dev/tty
-  ask PROVIDER_NAME "Nama provider" "MainAPI"
+  printf "${C_CYAN}ℹ Panduan Provider:${C_RESET}\n" > /dev/tty
+  printf "  • Nama provider = label bebas, contoh GodenAPI / OpenRouter / 9Router.\n" > /dev/tty
+  printf "  • API Base URL = endpoint provider, biasanya berakhiran /v1.\n" > /dev/tty
+  printf "  • API Key = key rahasia dari dashboard provider.\n" > /dev/tty
+  printf "  • Compatibility = mayoritas OpenAI-compatible pilih 1.\n" > /dev/tty
+  printf "  • Model ID = ID model persis dari provider.\n" > /dev/tty
+  printf "  • Context Length = kalau tidak tahu, tekan Enter.\n\n" > /dev/tty
+
+  ask PROVIDER_NAME "Nama provider (contoh GodenAPI)" "MainAPI"
   ask PROVIDER_URL "API Base URL (contoh https://api.example.com/v1)" ""
 
   [[ "$PROVIDER_URL" =~ ^https?:// ]] || die "Base URL wajib diawali https:// atau http://"
@@ -303,12 +328,13 @@ wizard() {
     die "Endpoint remote HTTP ditolak. Gunakan HTTPS. HTTP hanya boleh untuk localhost."
   fi
 
-  ask_secret PROVIDER_KEY "API Key (kosong jika local/keyless endpoint)"
+  ask_secret PROVIDER_KEY "API Key (Enter hanya jika endpoint lokal/keyless)"
 
   printf "\nAPI Compatibility:\n" > /dev/tty
-  printf "  1. Chat Completions (OpenAI-compatible) [default]\n" > /dev/tty
+  printf "  1. Chat Completions (OpenAI-compatible) [paling umum / default]\n" > /dev/tty
   printf "  2. Responses / Codex\n" > /dev/tty
   printf "  3. Anthropic Messages\n" > /dev/tty
+  printf "  Tidak tahu? Tekan Enter untuk pilihan 1.\n" > /dev/tty
   ask MODE_CHOICE "Pilih [1-3]" "1"
   case "$MODE_CHOICE" in
     1) TRANSPORT="chat_completions" ;;
@@ -321,9 +347,12 @@ wizard() {
     discover_models || true
   fi
 
+  printf "\n${C_CYAN}Model ID${C_RESET}: gunakan ID persis dari provider/daftar model.\n" > /dev/tty
   ask MODEL_ID "Model ID yang akan dijadikan default" ""
   [[ -n "$MODEL_ID" ]] || die "Model ID wajib diisi."
-  ask CONTEXT_LENGTH "Context length token (kosong = auto-detect)" ""
+
+  printf "${C_CYAN}Context Length${C_RESET}: opsional; kalau tidak tahu cukup tekan Enter.\n" > /dev/tty
+  ask CONTEXT_LENGTH "Context length token (Enter = default/auto)" ""
   if [[ -n "$CONTEXT_LENGTH" ]]; then
     [[ "$CONTEXT_LENGTH" =~ ^[0-9]+$ ]] || die "Context length harus angka."
     if (( CONTEXT_LENGTH < 64000 )); then
@@ -332,6 +361,8 @@ wizard() {
   fi
 
   printf "\n${C_BOLD}3/3 — Workspace${C_RESET}\n" > /dev/tty
+  printf "${C_CYAN}ℹ Workspace${C_RESET} = folder default tempat Hermes mengerjakan/menyimpan project.\n" > /dev/tty
+  printf "Kalau tidak punya folder khusus, cukup tekan Enter.\n" > /dev/tty
   ask WORKSPACE "Folder project default" "$HOME/Reii"
 
   if confirm "Tes satu prompt AI setelah setup? Ini memakai sedikit quota/token." "Y"; then
@@ -520,7 +551,7 @@ case "${1:-status}" in
   config) "$HERMES_BIN" config ;;
   update) "$HERMES_BIN" update --backup ;;
   version)
-    echo "HermesLaunch v1.2.0"
+    echo "HermesLaunch v1.2.1"
     "$HERMES_BIN" --version
     ;;
   backup)

@@ -1,20 +1,22 @@
 # Changelog
 
-## [1.2.0] - 2026-08-28
+## [1.2.1] - 2026-08-28
 
-### Added
-- Separate VPS Mode and native Android/Termux Mobile Mode.
-- `install-vps.sh` for systemd deployments.
-- `install-termux.sh` for no-VPS Android deployments.
-- Auto-dispatching `install.sh` and `bootstrap.sh`.
-- Termux tmux gateway manager using `hermes gateway run`.
-- Optional wake-lock integration and Termux:Boot helper.
-- Dedicated Termux documentation.
+### Improved
+- Setup wizard now explains what each Telegram field means.
+- Personal DM users can press Enter for Home Channel.
+- Group/forum Chat ID examples added.
+- Literal `ID` is no longer accepted as a Home Channel value.
+- Provider fields now explain Base URL, API Key, compatibility, Model ID, context length, and workspace.
+- Termux users see a setup checklist before the official Hermes wizards.
+- README has a dedicated setup-field reference.
 
-### Changed
-- Canonical repository: `https://github.com/Cylne/HermesLaunch.git`.
-- README now explicitly treats VPS and Termux as different environments.
-- Termux is documented as best-effort, while VPS is the stable 24/7 path.
+### Runtime
+- VPS Mode remains systemd-based.
+- Termux Mobile Mode remains native Termux + tmux, without Ubuntu/proot.
+
+### Repository
+- https://github.com/Cylne/HermesLaunch.git
 
 ### Credits
 Created by **Reii**.

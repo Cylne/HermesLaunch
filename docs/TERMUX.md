@@ -36,6 +36,28 @@ curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.s
 
 HermesLaunch automatically selects `install-termux.sh`.
 
+
+### Apa yang perlu disiapkan?
+
+```text
+Bot Token                 → dari @BotFather
+Telegram numeric User ID  → dari @userinfobot / @get_id_bot
+Home Channel              → User ID sendiri untuk DM pribadi
+API Base URL              → endpoint provider
+API Key                   → key provider
+Model ID                  → ID model persis
+```
+
+Kalau muncul:
+
+```text
+Home Channel [1447854280]:
+```
+
+dan kamu ingin cron/notifikasi masuk ke DM sendiri, **tekan Enter saja**.
+
+Untuk grup/forum, gunakan Chat ID seperti `-1001234567890`.
+
 ## 3. Provider setup
 
 The Termux installer launches:

@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.2.0"
+HL_VERSION="1.2.1"
 REPO_URL="https://github.com/Cylne/HermesLaunch.git"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 SESSION_NAME="hermeslaunch-gateway"
@@ -138,7 +138,7 @@ case "${1:-status}" in
     "$HERMES" update --backup
     ;;
   version)
-    echo "HermesLaunch v1.2.0 — Termux Mobile Mode"
+    echo "HermesLaunch v1.2.1 — Termux Mobile Mode"
     "$HERMES" --version
     ;;
   *)
@@ -188,6 +188,32 @@ main() {
 
   info "Repository: $REPO_URL"
   warn "Termux adalah Tier-2/best-effort. Android dapat menghentikan background process."
+  echo
+
+  cat <<'GUIDE'
+Sebelum wizard dimulai, siapkan:
+
+[Telegram]
+  Bot Token
+    → dari @BotFather
+
+  Numeric User ID
+    → dari @userinfobot / @get_id_bot
+    → contoh: 1447854280
+    → bukan @username
+
+  Home Channel
+    → DM pribadi: gunakan User ID kamu
+    → grup/forum: gunakan Chat ID seperti -1001234567890
+    → bisa diganti nanti dengan /sethome
+
+[AI Provider]
+  API Base URL → contoh https://provider.example.com/v1
+  API Key      → dari dashboard provider
+  Model ID     → ID model persis dari provider
+
+Jika wizard menampilkan [nilai-default], tekan Enter untuk memakai nilai tersebut.
+GUIDE
   echo
 
   pkg update -y

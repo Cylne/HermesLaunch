@@ -1,6 +1,18 @@
 # Changelog
 
-## [1.2.1] - 2026-08-28
+## [1.2.2] - 2026-08-28
+
+### Added
+- Added an installation-complete screenshot to `assets/installation-complete.png`.
+- Added a polished **Installation Preview** section to the GitHub README.
+
+### Repository
+- https://github.com/Cylne/HermesLaunch.git
+
+### Credits
+Created by **Reii**.
+
+## [1.2.2] - 2026-08-28
 
 ### Improved
 - Setup wizard now explains what each Telegram field means.

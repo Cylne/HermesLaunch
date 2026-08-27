@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.2.1"
+HL_VERSION="1.2.2"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
@@ -39,7 +39,7 @@ is_termux() {
 
 termux_notice() {
 cat <<'EOF'
-HermesLaunch v1.2.1 ditujukan untuk VPS Linux + systemd.
+HermesLaunch v1.2.2 ditujukan untuk VPS Linux + systemd.
 
 Kamu sedang menjalankannya di Termux Android.
 Gunakan Termux sebagai SSH client:
@@ -106,8 +106,8 @@ setup_privileges() {
 }
 
 check_platform() {
-  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.2.1 hanya mendukung Linux VPS."
-  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.2.1 membutuhkan systemd."
+  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.2.2 hanya mendukung Linux VPS."
+  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.2.2 membutuhkan systemd."
   if is_termux; then
     termux_notice
     exit 2
@@ -551,7 +551,7 @@ case "${1:-status}" in
   config) "$HERMES_BIN" config ;;
   update) "$HERMES_BIN" update --backup ;;
   version)
-    echo "HermesLaunch v1.2.1"
+    echo "HermesLaunch v1.2.2"
     "$HERMES_BIN" --version
     ;;
   backup)

@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -47,6 +47,20 @@ Tujuannya sederhana: satu repository yang membuat pemasangan Hermes + Telegram l
 ```
 
 > HermesLaunch is independent and is not affiliated with or endorsed by Nous Research.
+
+---
+
+## 📸 Installation Preview
+
+<div align="center">
+
+<img src="assets/installation-complete.png" alt="HermesLaunch installation complete preview" width="900">
+
+**Hermes successfully installed and ready to use.**
+
+</div>
+
+> Screenshot di atas menunjukkan contoh hasil instalasi Hermes pada Linux VPS. Tampilan dapat sedikit berbeda tergantung versi Hermes dan environment yang digunakan.
 
 ---
 

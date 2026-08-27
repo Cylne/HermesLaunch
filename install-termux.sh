@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.2.1"
+HL_VERSION="1.2.2"
 REPO_URL="https://github.com/Cylne/HermesLaunch.git"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 SESSION_NAME="hermeslaunch-gateway"
@@ -138,7 +138,7 @@ case "${1:-status}" in
     "$HERMES" update --backup
     ;;
   version)
-    echo "HermesLaunch v1.2.1 — Termux Mobile Mode"
+    echo "HermesLaunch v1.2.2 — Termux Mobile Mode"
     "$HERMES" --version
     ;;
   *)

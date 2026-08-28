@@ -31,4 +31,4 @@ fi
 bash "$ROOT/toolbox/hermestools" version
 bash "$ROOT/toolbox/hermestools" help >/dev/null
 
-echo "HermesLaunch v1.4.1 self-test: PASS"
+echo "HermesLaunch v1.4.2 self-test: PASS"

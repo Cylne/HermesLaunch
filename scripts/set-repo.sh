@@ -9,5 +9,5 @@ OLD="Cylne/HermesLaunch"
 
 grep -RIl --exclude-dir=.git --exclude-dir=dist "$OLD" "$ROOT" | while read -r f; do
   sed -i "s|$OLD|$NEW|g" "$f"
-  echo "updated: ${f#$ROOT/}"
+  echo "updated: ${f#"$ROOT"/}"
 done

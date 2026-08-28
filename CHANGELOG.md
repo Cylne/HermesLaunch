@@ -1,6 +1,20 @@
 # Changelog
 
-## v1.4.1 — GitHub CI Permission Fix
+## v1.4.2 — ShellCheck SC2295 Fix
+
+### Fixed
+- Fixed ShellCheck SC2295 in `scripts/set-repo.sh`.
+- Repository-relative path output now quotes `$ROOT` correctly inside parameter expansion:
+  `echo "updated: ${f#"$ROOT"/}"`.
+- GitHub CI permission fix from v1.4.1 remains active.
+
+### Compatibility
+- No Hermes provider behavior changes.
+- 9Router integration unchanged.
+- Genspark integration unchanged.
+- Existing providers remain preserved.
+
+## v1.4.2 — GitHub CI Permission Fix
 
 ### Fixed
 - Repository self-test no longer executes `toolbox/hermestools` directly.
@@ -14,7 +28,7 @@
 - No Genspark authentication changes.
 - Existing Hermes providers remain preserved.
 
-## v1.4.1 — All-In AI Stack
+## v1.4.2 — All-In AI Stack
 
 ### Added
 - `bootstrap-tools.sh` for existing Hermes VPS installations.
@@ -28,7 +42,7 @@
 - Genspark generated skill reference sync with `gsk init-skills`.
 - Hermes skills: `genspark`, `router9`, `ai-stack`.
 - Hermes config/.env backup and rollback on failed provider configuration.
-- `hermeslaunch tools` shortcut on new v1.4.1 VPS installs.
+- `hermeslaunch tools` shortcut on new v1.4.2 VPS installs.
 
 ### Security
 - 9Router defaults to `127.0.0.1:20128`.
@@ -36,7 +50,7 @@
 - Genspark API key is stored locally with mode 600 and never echoed.
 - Unrelated VPS services/projects are not touched.
 
-## [1.4.1] - 2026-08-28
+## [1.4.2] - 2026-08-28
 
 ### Added
 - HermesLaunch Provider Manager for VPS and Termux.

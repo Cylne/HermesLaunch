@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.4.2-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -481,7 +481,7 @@ Created by **Reii**
 
 # 🧠 All-In AI Stack — 9Router + Genspark + Hermes Skills
 
-HermesLaunch v1.4.1 menambahkan **AI Stack installer** untuk VPS.
+HermesLaunch v1.4.2 menambahkan **AI Stack installer** untuk VPS.
 
 ```text
 Telegram
@@ -499,7 +499,7 @@ Fresh VPS install also offers the All-In stack automatically at the end of the n
 
 ## Untuk Hermes yang sudah terinstall
 
-Setelah repository v1.4.1 dipublish:
+Setelah repository v1.4.2 dipublish:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-tools.sh | bash
@@ -560,7 +560,7 @@ hermestools genspark sync
 hermestools genspark search "latest AI agents"
 ```
 
-Jika HermesLaunch v1.4.1 manager sudah terpasang:
+Jika HermesLaunch v1.4.2 manager sudah terpasang:
 
 ```bash
 hermeslaunch tools
@@ -589,7 +589,7 @@ Skill yang tersedia:
 
 ## GitHub upload / executable-bit compatibility
 
-HermesLaunch v1.4.1 does not require GitHub to preserve the executable bit for
+HermesLaunch v1.4.2 does not require GitHub to preserve the executable bit for
 repository validation. CI invokes repository scripts through `bash`; the actual
 installer applies executable permissions when commands are installed into
 `/usr/local/bin`.

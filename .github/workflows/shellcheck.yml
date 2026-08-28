@@ -21,6 +21,9 @@ jobs:
           bash -n bootstrap.sh
           bash -n scripts/set-repo.sh
           bash -n scripts/release.sh
+      - name: Repository self-test
+        run: bash scripts/selftest.sh
+
       - name: ShellCheck
         run: |
           shellcheck -x install.sh bootstrap.sh scripts/set-repo.sh scripts/release.sh

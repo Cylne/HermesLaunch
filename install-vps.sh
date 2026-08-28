@@ -2,7 +2,9 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.3.0"
+HL_VERSION="1.4.0"
+HERMESLAUNCH_REPO="${HERMESLAUNCH_REPO:-Cylne/HermesLaunch}"
+HERMESLAUNCH_REF="${HERMESLAUNCH_REF:-main}"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
@@ -39,7 +41,7 @@ is_termux() {
 
 termux_notice() {
 cat <<'EOF'
-HermesLaunch v1.3.0 ditujukan untuk VPS Linux + systemd.
+HermesLaunch v1.4.0 ditujukan untuk VPS Linux + systemd.
 
 Kamu sedang menjalankannya di Termux Android.
 Gunakan Termux sebagai SSH client:
@@ -106,8 +108,8 @@ setup_privileges() {
 }
 
 check_platform() {
-  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.3.0 hanya mendukung Linux VPS."
-  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.3.0 membutuhkan systemd."
+  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.4.0 hanya mendukung Linux VPS."
+  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.4.0 membutuhkan systemd."
   if is_termux; then
     termux_notice
     exit 2
@@ -884,6 +886,8 @@ Usage:
   hermeslaunch provider
   hermeslaunch provider list
   hermeslaunch provider remove [slug]
+  hermeslaunch tools
+  hermeslaunch tools status
   hermeslaunch config
   hermeslaunch backup [output.zip]
   hermeslaunch restore <backup.zip>
@@ -919,10 +923,20 @@ case "${1:-status}" in
   provider|providers)
     provider_command "${2:-menu}" "${3:-}"
     ;;
+  tools|toolbox|stack)
+    if command -v hermestools >/dev/null 2>&1; then
+      shift || true
+      exec hermestools "$@"
+    else
+      echo "HermesTools belum terinstall."
+      echo "Jalankan bootstrap-tools.sh dari repository HermesLaunch v1.4.0."
+      exit 1
+    fi
+    ;;
   config) "$HERMES_BIN" config ;;
   update) "$HERMES_BIN" update --backup ;;
   version)
-    echo "HermesLaunch v1.3.0"
+    echo "HermesLaunch v1.4.0"
     "$HERMES_BIN" --version
     ;;
   backup)
@@ -951,6 +965,36 @@ MANAGER
   ok "Command manager tersedia: hermeslaunch"
 }
 
+
+offer_allin_tools() {
+  if ! confirm "Install All-In AI Stack (9Router + Genspark + Hermes Skills) sekarang?" "Y"; then
+    warn "All-In Tools dilewati. Nanti jalankan bootstrap-tools.sh."
+    return 0
+  fi
+
+  info "Memulai All-In AI Stack installer..."
+  local tmp base
+  tmp="$(mktemp)"
+  base="https://raw.githubusercontent.com/${HERMESLAUNCH_REPO}/${HERMESLAUNCH_REF}"
+  curl -fsSL "${base}/bootstrap-tools.sh" -o "$tmp"
+  chmod 700 "$tmp"
+
+  set +e
+  HERMESLAUNCH_REPO="$HERMESLAUNCH_REPO" \
+  HERMESLAUNCH_REF="$HERMESLAUNCH_REF" \
+    bash "$tmp"
+  local rc=$?
+  set -e
+  rm -f "$tmp"
+
+  if [[ $rc -eq 0 ]]; then
+    ok "All-In AI Stack setup selesai"
+  else
+    warn "All-In AI Stack belum selesai (exit $rc). Hermes utama tetap terinstall."
+    warn "Jalankan lagi nanti: curl -fsSL ${base}/bootstrap-tools.sh | bash"
+  fi
+}
+
 final_message() {
   printf "\n${C_GREEN}${C_BOLD}HermesLaunch selesai ✅${C_RESET}\n\n"
   cat <<EOF
@@ -968,6 +1012,7 @@ Command:
   hermeslaunch backup
   hermeslaunch model
   hermeslaunch provider
+  hermeslaunch tools        # setelah All-In Tools dipasang
 
 Sekarang buka bot Telegram kamu lalu kirim:
   Halo Hermes, apakah kamu online?
@@ -996,6 +1041,7 @@ main() {
   test_chat
   install_gateway
   install_manager
+  offer_allin_tools
   final_message
 }
 

@@ -1,6 +1,28 @@
 # Changelog
 
-## [1.3.0] - 2026-08-28
+## v1.4.0 — All-In AI Stack
+
+### Added
+- `bootstrap-tools.sh` for existing Hermes VPS installations.
+- `toolbox/install-ai-stack.sh`.
+- `hermestools` interactive manager.
+- 9Router Docker install/repair, localhost-only binding, status/log/update/model management.
+- Safe Hermes named custom provider registration as `custom:9router`.
+- Existing Hermes provider remains active unless user explicitly switches.
+- Genspark CLI install/update and authentication wizard.
+- `gskh` credential-safe wrapper.
+- Genspark generated skill reference sync with `gsk init-skills`.
+- Hermes skills: `genspark`, `router9`, `ai-stack`.
+- Hermes config/.env backup and rollback on failed provider configuration.
+- `hermeslaunch tools` shortcut on new v1.4.0 VPS installs.
+
+### Security
+- 9Router defaults to `127.0.0.1:20128`.
+- External login/OAuth is never bypassed.
+- Genspark API key is stored locally with mode 600 and never echoed.
+- Unrelated VPS services/projects are not touched.
+
+## [1.4.0] - 2026-08-28
 
 ### Added
 - HermesLaunch Provider Manager for VPS and Termux.

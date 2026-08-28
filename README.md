@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -476,3 +476,112 @@ Hermes Agent is a separate project by Nous Research.
 Created by **Reii**
 
 </div>
+
+---
+
+# 🧠 All-In AI Stack — 9Router + Genspark + Hermes Skills
+
+HermesLaunch v1.4.0 menambahkan **AI Stack installer** untuk VPS.
+
+```text
+Telegram
+   ↓
+Hermes
+   ├── Existing providers (tetap utuh)
+   ├── custom:9router
+   │      └── OpenAI-compatible model gateway
+   │
+   └── Genspark toolbox
+          └── search / crawl / generated GSK skill reference
+```
+
+Fresh VPS install also offers the All-In stack automatically at the end of the normal HermesLaunch wizard.
+
+## Untuk Hermes yang sudah terinstall
+
+Setelah repository v1.4.0 dipublish:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-tools.sh | bash
+```
+
+Atau dari clone/ZIP:
+
+```bash
+bash toolbox/install-ai-stack.sh
+```
+
+Installer otomatis:
+
+- backup config Hermes
+- install/repair Docker
+- deploy 9Router dengan binding **127.0.0.1:20128**
+- persistent data di `~/.9router`
+- install/update `@genspark/cli`
+- install command `hermestools`
+- install Hermes skills `genspark`, `router9`, `ai-stack`
+- sync reference docs dari `gsk init-skills`
+- health check
+- guided 9Router → Hermes linking
+- guided Genspark authentication
+- tidak mengganti provider aktif kecuali user menyetujuinya
+
+## External authentication yang tetap membutuhkan user
+
+Installer tidak mencoba membypass login/OAuth atau mengedit database internal provider.
+
+**9Router:** buka dashboard lewat SSH tunnel, Connect provider, lalu copy API key.
+
+```bash
+hermestools router dashboard
+```
+
+**Genspark:** pilih login resmi atau API key.
+
+```bash
+hermestools genspark auth
+```
+
+## Manager
+
+```bash
+hermestools
+hermestools status
+hermestools doctor
+
+hermestools router status
+hermestools router models
+hermestools router link
+hermestools router use MODEL_ID
+
+hermestools genspark auth
+hermestools genspark test
+hermestools genspark sync
+hermestools genspark search "latest AI agents"
+```
+
+Jika HermesLaunch v1.4.0 manager sudah terpasang:
+
+```bash
+hermeslaunch tools
+```
+
+## Telegram / Hermes skills
+
+Setelah setup, buat session baru atau jalankan:
+
+```text
+/reset
+```
+
+Skill yang tersedia:
+
+```text
+/genspark
+/router9
+/ai-stack
+```
+
+> 9Router diposisikan sebagai **provider/gateway**, sedangkan Genspark diposisikan
+> sebagai **external toolbox**. Keduanya tidak menghapus provider Hermes yang sudah ada.
+

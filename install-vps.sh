@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.2.2"
+HL_VERSION="1.3.0"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 
@@ -39,7 +39,7 @@ is_termux() {
 
 termux_notice() {
 cat <<'EOF'
-HermesLaunch v1.2.2 ditujukan untuk VPS Linux + systemd.
+HermesLaunch v1.3.0 ditujukan untuk VPS Linux + systemd.
 
 Kamu sedang menjalankannya di Termux Android.
 Gunakan Termux sebagai SSH client:
@@ -106,8 +106,8 @@ setup_privileges() {
 }
 
 check_platform() {
-  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.2.2 hanya mendukung Linux VPS."
-  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.2.2 membutuhkan systemd."
+  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.3.0 hanya mendukung Linux VPS."
+  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.3.0 membutuhkan systemd."
   if is_termux; then
     termux_notice
     exit 2
@@ -503,6 +503,371 @@ run_system() {
   if [[ "$EUID" -eq 0 ]]; then "$@"; else sudo "$@"; fi
 }
 
+
+get_python() {
+  command -v python3 2>/dev/null || command -v python 2>/dev/null || true
+}
+
+provider_require_python() {
+  PROVIDER_PY="$(get_python)"
+  [[ -n "$PROVIDER_PY" ]] || {
+    echo "Python dibutuhkan untuk Provider Manager."
+    return 1
+  }
+}
+
+provider_config_path() {
+  ""$HERMES_BIN"" config path 2>/dev/null || printf '%s\n' "$HERMES_HOME/config.yaml"
+}
+
+provider_env_path() {
+  ""$HERMES_BIN"" config env-path 2>/dev/null || printf '%s\n' "$HERMES_HOME/.env"
+}
+
+provider_json() {
+  local raw
+  raw="$(""$HERMES_BIN"" config get providers --json 2>/dev/null || true)"
+  [[ -n "$raw" ]] && printf '%s\n' "$raw" || printf '{}\n'
+}
+
+provider_rows() {
+  provider_require_python || return 1
+  provider_json | "$PROVIDER_PY" -c '
+import json,sys
+try:
+    data=json.load(sys.stdin)
+except Exception:
+    data={}
+if not isinstance(data,dict):
+    data={}
+for slug,cfg in data.items():
+    if not isinstance(cfg,dict):
+        cfg={}
+    name=str(cfg.get("name") or slug)
+    api=str(cfg.get("api") or cfg.get("base_url") or "-")
+    model=str(cfg.get("default_model") or "-")
+    transport=str(cfg.get("transport") or "-")
+    key_env=str(cfg.get("key_env") or "")
+    print("\t".join([str(slug), name, api, model, transport, key_env]))
+'
+}
+
+provider_list() {
+  local rows
+  rows="$(provider_rows || true)"
+  echo
+  echo "HermesLaunch Custom Providers"
+  echo "────────────────────────────────────────────────────────────"
+  if [[ -z "$rows" ]]; then
+    echo "Belum ada custom provider di config Hermes."
+    echo "Gunakan: hermeslaunch provider add"
+    return 0
+  fi
+
+  printf '%-4s %-18s %-20s %-24s\n' "No" "Slug" "Name" "Default Model"
+  printf '%-4s %-18s %-20s %-24s\n' "--" "------------------" "--------------------" "------------------------"
+  local n=1 slug name api model transport key_env
+  while IFS=$'\t' read -r slug name api model transport key_env; do
+    printf '%-4s %-18s %-20s %-24s\n' "$n" "$slug" "${name:0:20}" "${model:0:24}"
+    n=$((n+1))
+  done <<< "$rows"
+  echo
+  echo "Catatan: Provider Manager hanya mengelola custom provider di bagian 'providers:'."
+  echo "Built-in provider Hermes tidak dihapus oleh menu ini."
+}
+
+provider_choose() {
+  local prompt="${1:-Pilih provider}" rows count choice
+  rows="$(provider_rows || true)"
+  [[ -n "$rows" ]] || {
+    echo "Belum ada custom provider."
+    return 1
+  }
+
+  provider_list
+  count="$(printf '%s\n' "$rows" | grep -c . || true)"
+  printf "%s [1-%s]: " "$prompt" "$count" > /dev/tty
+  IFS= read -r choice < /dev/tty || true
+  [[ "$choice" =~ ^[0-9]+$ ]] || { echo "Pilihan tidak valid."; return 1; }
+  (( choice >= 1 && choice <= count )) || { echo "Pilihan di luar daftar."; return 1; }
+  printf '%s\n' "$rows" | sed -n "${choice}p" | cut -f1
+}
+
+provider_env_get() {
+  provider_require_python || return 1
+  local key="$1" env_path
+  env_path="$(provider_env_path)"
+  "$PROVIDER_PY" - "$env_path" "$key" <<'PY'
+from pathlib import Path
+import json, sys
+p=Path(sys.argv[1]); key=sys.argv[2]
+if not p.exists():
+    raise SystemExit
+for raw in p.read_text(encoding="utf-8").splitlines():
+    line=raw.strip()
+    if not line or line.startswith("#") or "=" not in line:
+        continue
+    k,v=line.split("=",1)
+    if k.strip()!=key:
+        continue
+    v=v.strip()
+    try:
+        if v.startswith(("\"", "'")):
+            print(json.loads(v) if v.startswith("\"") else v[1:-1])
+        else:
+            print(v)
+    except Exception:
+        print(v.strip("\"'"))
+    break
+PY
+}
+
+provider_env_unset() {
+  provider_require_python || return 1
+  local key="$1" env_path
+  env_path="$(provider_env_path)"
+  [[ -f "$env_path" ]] || return 0
+
+  "$PROVIDER_PY" - "$env_path" "$key" <<'PY'
+from pathlib import Path
+import os,re,sys,tempfile
+p=Path(sys.argv[1]); key=sys.argv[2]
+lines=p.read_text(encoding="utf-8").splitlines()
+pat=re.compile(r"^\s*"+re.escape(key)+r"\s*=")
+out=[line for line in lines if not pat.match(line)]
+tmp=p.with_suffix(p.suffix+".hermeslaunch.tmp")
+tmp.write_text("\n".join(out).rstrip()+"\n" if out else "", encoding="utf-8")
+os.chmod(tmp,0o600)
+tmp.replace(p)
+os.chmod(p,0o600)
+PY
+}
+
+provider_field() {
+  provider_require_python || return 1
+  local slug="$1" field="$2" raw
+  raw="$(""$HERMES_BIN"" config get "providers.${slug}" --json 2>/dev/null || true)"
+  printf '%s\n' "$raw" | "$PROVIDER_PY" -c '
+import json,sys
+field=sys.argv[1]
+try:
+    data=json.load(sys.stdin)
+except Exception:
+    data={}
+if isinstance(data,dict):
+    val=data.get(field,"")
+    if val is None: val=""
+    if isinstance(val,(dict,list)):
+        print(json.dumps(val))
+    else:
+        print(val)
+' "$field"
+}
+
+provider_current() {
+  provider_require_python || return 1
+  local raw
+  raw="$(""$HERMES_BIN"" config get model.provider --json 2>/dev/null || true)"
+  if [[ -z "$raw" ]]; then
+    ""$HERMES_BIN"" config get model.provider 2>/dev/null || true
+    return
+  fi
+  printf '%s\n' "$raw" | "$PROVIDER_PY" -c '
+import json,sys
+s=sys.stdin.read().strip()
+try:
+    v=json.loads(s)
+    print(v if not isinstance(v,(dict,list)) else "")
+except Exception:
+    print(s.strip("\""))
+'
+}
+
+provider_backup() {
+  local config_path env_path ts dir
+  config_path="$(provider_config_path)"
+  env_path="$(provider_env_path)"
+  ts="$(date +%Y%m%d-%H%M%S)"
+  dir="$HERMES_HOME/backups/hermeslaunch-provider-$ts"
+  mkdir -p "$dir"
+
+  [[ -f "$config_path" ]] && cp -a "$config_path" "$dir/config.yaml"
+  if [[ -f "$env_path" ]]; then
+    cp -a "$env_path" "$dir/.env"
+    chmod 600 "$dir/.env" 2>/dev/null || true
+  fi
+  chmod 700 "$dir" 2>/dev/null || true
+  printf '%s\n' "$dir"
+}
+
+provider_add() {
+  echo
+  echo "Add Provider"
+  echo "HermesLaunch membuka wizard model/provider resmi Hermes."
+  echo "Pilih custom provider jika ingin menambahkan endpoint baru."
+  ""$HERMES_BIN"" model
+}
+
+provider_switch() {
+  echo
+  echo "Switch Provider / Model"
+  ""$HERMES_BIN"" model
+  run_system systemctl restart hermes-gateway || true
+}
+
+provider_test() {
+  local slug="${1:-}" api key_env key code body
+  [[ -n "$slug" ]] || slug="$(provider_choose "Provider yang mau dites")" || return 1
+
+  api="$(provider_field "$slug" api)"
+  [[ -n "$api" ]] || api="$(provider_field "$slug" base_url)"
+  key_env="$(provider_field "$slug" key_env)"
+  key=""
+  [[ -n "$key_env" ]] && key="$(provider_env_get "$key_env" || true)"
+
+  [[ -n "$api" ]] || {
+    echo "Provider '$slug' tidak memiliki API/Base URL yang bisa dites."
+    return 1
+  }
+
+  echo
+  echo "Testing provider: $slug"
+  echo "Endpoint        : ${api%/}/models"
+  echo "Authentication  : $([[ -n "$key" && "$key" != "no-key-required" ]] && echo configured || echo none/keyless)"
+  echo "API key tidak akan ditampilkan."
+
+  body="$(mktemp)"
+  if [[ -n "$key" && "$key" != "no-key-required" ]]; then
+    code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$body" -w '%{http_code}' \
+      -H "Authorization: Bearer $key" -H "Accept: application/json" \
+      "${api%/}/models" || true)"
+  else
+    code="$(curl -sS --connect-timeout 10 --max-time 20 -o "$body" -w '%{http_code}' \
+      -H "Accept: application/json" "${api%/}/models" || true)"
+  fi
+  rm -f "$body"
+
+  if [[ "$code" =~ ^2 ]]; then
+    echo "✓ Provider reachable (HTTP $code)"
+  else
+    echo "! /models returned HTTP ${code:-N/A}"
+    echo "  Ini belum tentu berarti provider rusak; beberapa endpoint tidak menyediakan /models."
+    return 1
+  fi
+}
+
+provider_remove() {
+  local slug="${1:-}" current key_env backup answer
+  [[ -n "$slug" ]] || slug="$(provider_choose "Provider yang mau dihapus")" || return 1
+
+  # Verify it exists in custom providers.
+  if ! provider_rows | cut -f1 | grep -Fxq "$slug"; then
+    echo "Custom provider '$slug' tidak ditemukan."
+    return 1
+  fi
+
+  current="$(provider_current || true)"
+  if [[ "$current" == "custom:$slug" ]]; then
+    echo
+    echo "Provider '$slug' sedang AKTIF."
+    echo "Sebelum dihapus, pilih provider/model pengganti."
+    ""$HERMES_BIN"" model
+    current="$(provider_current || true)"
+    if [[ "$current" == "custom:$slug" ]]; then
+      echo "Provider masih aktif. Penghapusan dibatalkan untuk mencegah config rusak."
+      return 1
+    fi
+  fi
+
+  key_env="$(provider_field "$slug" key_env)"
+  echo
+  echo "Provider : $slug"
+  echo "Key Env  : ${key_env:-none}"
+  echo
+  echo "Yang akan dilakukan:"
+  echo "  • backup config.yaml + .env"
+  echo "  • hapus custom provider '$slug' dari config"
+  if [[ "$key_env" == HERMESLAUNCH_*_API_KEY ]]; then
+    echo "  • hapus secret '$key_env' milik HermesLaunch dari .env"
+  elif [[ -n "$key_env" ]]; then
+    echo "  • secret '$key_env' DIPERTAHANKAN karena mungkin dipakai provider lain"
+  fi
+  echo "  • provider lain tidak disentuh"
+
+  printf "Lanjut hapus provider '%s'? [y/N]: " "$slug" > /dev/tty
+  IFS= read -r answer < /dev/tty || true
+  [[ "$answer" =~ ^[Yy]$ ]] || { echo "Dibatalkan."; return 0; }
+
+  backup="$(provider_backup)"
+  ""$HERMES_BIN"" config unset "providers.${slug}"
+
+  if [[ "$key_env" == HERMESLAUNCH_*_API_KEY ]]; then
+    provider_env_unset "$key_env"
+  fi
+
+  if ""$HERMES_BIN"" config check; then
+    run_system systemctl restart hermes-gateway || true
+    echo
+    echo "✓ Provider '$slug' berhasil dihapus."
+    echo "Backup: $backup"
+  else
+    echo
+    echo "Config check gagal."
+    echo "Backup tersedia di: $backup"
+    echo "Gateway tidak direstart."
+    return 1
+  fi
+}
+
+provider_menu() {
+  local choice slug
+  while true; do
+    echo
+    echo "╭──────────────────────────────────────────────╮"
+    echo "│      HermesLaunch Provider Manager          │"
+    echo "╰──────────────────────────────────────────────╯"
+    echo "1. List custom providers"
+    echo "2. Add provider"
+    echo "3. Switch provider / model"
+    echo "4. Test provider"
+    echo "5. Remove provider"
+    echo "6. Back"
+    printf "Pilih [1-6]: " > /dev/tty
+    IFS= read -r choice < /dev/tty || true
+    case "$choice" in
+      1) provider_list ;;
+      2) provider_add ;;
+      3) provider_switch ;;
+      4) slug="$(provider_choose "Provider yang mau dites")" && provider_test "$slug" || true ;;
+      5) slug="$(provider_choose "Provider yang mau dihapus")" && provider_remove "$slug" || true ;;
+      6|"") return 0 ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+  done
+}
+
+provider_command() {
+  local sub="${1:-menu}" slug="${2:-}"
+  case "$sub" in
+    menu|"") provider_menu ;;
+    list|ls) provider_list ;;
+    add) provider_add ;;
+    switch|use|change) provider_switch ;;
+    test) provider_test "$slug" ;;
+    remove|rm|delete) provider_remove "$slug" ;;
+    *)
+      echo "Usage:"
+      echo "  hermeslaunch provider"
+      echo "  hermeslaunch provider list"
+      echo "  hermeslaunch provider add"
+      echo "  hermeslaunch provider switch"
+      echo "  hermeslaunch provider test [slug]"
+      echo "  hermeslaunch provider remove [slug]"
+      return 2
+      ;;
+  esac
+}
+
 help_text() {
 cat <<'EOF'
 HermesLaunch — Hermes VPS Management Toolkit
@@ -516,6 +881,9 @@ Usage:
   hermeslaunch restart
   hermeslaunch doctor
   hermeslaunch model
+  hermeslaunch provider
+  hermeslaunch provider list
+  hermeslaunch provider remove [slug]
   hermeslaunch config
   hermeslaunch backup [output.zip]
   hermeslaunch restore <backup.zip>
@@ -548,10 +916,13 @@ case "${1:-status}" in
     ;;
   doctor) "$HERMES_BIN" doctor ;;
   model) "$HERMES_BIN" model ;;
+  provider|providers)
+    provider_command "${2:-menu}" "${3:-}"
+    ;;
   config) "$HERMES_BIN" config ;;
   update) "$HERMES_BIN" update --backup ;;
   version)
-    echo "HermesLaunch v1.2.2"
+    echo "HermesLaunch v1.3.0"
     "$HERMES_BIN" --version
     ;;
   backup)
@@ -596,6 +967,7 @@ Command:
   hermeslaunch doctor
   hermeslaunch backup
   hermeslaunch model
+  hermeslaunch provider
 
 Sekarang buka bot Telegram kamu lalu kirim:
   Halo Hermes, apakah kamu online?

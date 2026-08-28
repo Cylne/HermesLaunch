@@ -41,3 +41,19 @@ The command names may look similar, but the supervisors are intentionally differ
 VPS    = systemd
 Termux = tmux
 ```
+
+
+## Provider Manager
+
+Available on both VPS and Termux:
+
+```bash
+hermeslaunch provider
+hermeslaunch provider list
+hermeslaunch provider add
+hermeslaunch provider switch
+hermeslaunch provider test [slug]
+hermeslaunch provider remove [slug]
+```
+
+Removal is confirmation-gated and creates a config backup first.

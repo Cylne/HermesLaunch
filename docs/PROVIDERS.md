@@ -1,68 +1,89 @@
-# 🔌 Provider Guide
+# 🔌 Provider Manager
 
-HermesLaunch fokus pada endpoint yang kompatibel dengan OpenAI/Responses/Anthropic proxy.
+HermesLaunch v1.3.0 memiliki **Provider Manager** untuk custom providers.
 
-## OpenAI-compatible
+> Provider Manager hanya mengelola provider yang berada di bagian `providers:` pada konfigurasi Hermes. Built-in providers Hermes tidak dihapus.
 
-Pilih:
+## Open menu
 
-```text
-API Compatibility: 1
+```bash
+hermeslaunch provider
 ```
 
-Contoh bentuk URL:
+Menu:
 
 ```text
-https://provider.example.com/v1
+1. List custom providers
+2. Add provider
+3. Switch provider / model
+4. Test provider
+5. Remove provider
+6. Back
 ```
 
-HermesLaunch akan mencoba membaca:
+## Direct commands
+
+```bash
+hermeslaunch provider list
+hermeslaunch provider add
+hermeslaunch provider switch
+hermeslaunch provider test
+hermeslaunch provider test provider-slug
+hermeslaunch provider remove
+hermeslaunch provider remove provider-slug
+```
+
+## Safe provider removal
+
+Sebelum menghapus provider, HermesLaunch akan:
+
+1. memastikan provider benar-benar custom provider;
+2. mengecek apakah provider sedang aktif;
+3. jika aktif, meminta user memilih provider/model pengganti terlebih dahulu;
+4. membuat backup `config.yaml` dan `.env`;
+5. menghapus hanya konfigurasi provider yang dipilih;
+6. hanya menghapus API key otomatis jika key tersebut dibuat khusus oleh HermesLaunch (`HERMESLAUNCH_*_API_KEY`);
+7. mempertahankan key generik/shared seperti `OPENAI_API_KEY`;
+8. menjalankan `hermes config check`;
+9. restart gateway hanya setelah config valid.
+
+Backup disimpan di:
 
 ```text
-GET <base-url>/models
+~/.hermes/backups/hermeslaunch-provider-YYYYMMDD-HHMMSS/
 ```
 
-dan menampilkan maksimal 25 Model ID.
+## Provider testing
 
-## 9Router lokal
+`hermeslaunch provider test` melakukan connectivity check ringan ke:
 
-Jika 9Router berjalan di VPS yang sama:
+```text
+GET <provider-base-url>/models
+```
+
+API key tidak dicetak ke terminal.
+
+Beberapa provider tidak menyediakan `/models`, jadi response non-2xx belum tentu berarti provider rusak.
+
+## Add / switch provider
+
+HermesLaunch menggunakan wizard resmi Hermes:
+
+```bash
+hermes model
+```
+
+Ini menjaga compatibility dengan provider/model baru yang ditambahkan Hermes di masa depan.
+
+## Example custom provider
 
 ```text
 Provider : 9Router
 Base URL : http://127.0.0.1:20128/v1
 Mode     : Chat Completions
+Model    : <model-id>
 ```
 
-HTTP tanpa TLS hanya diizinkan HermesLaunch untuk `localhost` / `127.0.0.1`.
+Remote provider sebaiknya menggunakan HTTPS.
 
-## Ganti model setelah install
-
-Dari Telegram:
-
-```text
-/model
-```
-
-Dari terminal VPS:
-
-```bash
-hermeslaunch model
-```
-
-## Tambah provider lain
-
-Gunakan wizard resmi Hermes:
-
-```bash
-hermeslaunch model
-```
-
-Hermes juga mendukung named custom providers dan banyak built-in provider.
-
-## Catatan keamanan
-
-- Jangan menaruh API key di README.
-- Jangan commit `~/.hermes/.env`.
-- Jangan mengirim API key ke chat publik.
-- Gunakan HTTPS untuk provider remote.
+Repository: https://github.com/Cylne/HermesLaunch.git

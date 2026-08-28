@@ -11,7 +11,7 @@ https://github.com/Cylne/HermesLaunch.git
 ```bash
 git init
 git add .
-git commit -m "release: HermesLaunch v1.2.2"
+git commit -m "release: HermesLaunch v1.3.0"
 git branch -M main
 git remote add origin https://github.com/Cylne/HermesLaunch.git
 git push -u origin main

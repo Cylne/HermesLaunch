@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -251,6 +251,55 @@ Jika target utama adalah uptime stabil 24/7, gunakan **VPS Mode**.
 
 ---
 
+
+# 🤖 Telegram Bot Features
+
+HermesLaunch menghubungkan Hermes Agent ke Telegram Gateway. Setelah gateway aktif, fitur Telegram berasal dari Hermes dan dapat mencakup:
+
+| Feature / Command | Fungsi |
+|---|---|
+| **Private DM & Group Chat** | Gunakan Hermes dari chat pribadi maupun grup yang dikonfigurasi |
+| **Allowlist** | Batasi akun Telegram yang boleh memakai bot |
+| `/new` / `/reset` | Mulai percakapan/session baru |
+| `/model` | Lihat atau ganti provider + model dari Telegram |
+| `/status` | Lihat informasi session aktif |
+| `/sessions` | Lihat dan cari session sebelumnya |
+| `/resume` | Lanjutkan session lama |
+| `/title` | Beri nama session |
+| `/retry` | Ulangi respons terakhir |
+| `/undo` | Hapus exchange terakhir |
+| `/compress` | Kompres context conversation |
+| `/usage` | Lihat penggunaan token session |
+| `/insights` | Lihat usage analytics |
+| `/stop` | Hentikan agent yang sedang berjalan |
+| `/approve` | Izinkan command berisiko yang menunggu approval |
+| `/deny` | Tolak command berisiko |
+| `/sethome` | Jadikan DM/grup saat ini sebagai tujuan cron/notifikasi |
+| `/topic` | Multi-session topic mode pada Telegram DM bila didukung/configured |
+| `/commands` | Lihat command yang tersedia |
+| **Dynamic skill commands** | Skill Hermes yang terpasang dapat muncul sebagai slash command |
+
+### Home Channel
+
+Untuk bot pribadi:
+
+```text
+Telegram User ID : 1447854280
+Home Channel     : 1447854280
+```
+
+Untuk grup/forum, Home Channel menggunakan Chat ID grup seperti:
+
+```text
+-1001234567890
+```
+
+Cron, reminder, dan proactive delivery Hermes dapat diarahkan ke Home Channel.
+
+> Ketersediaan command tertentu mengikuti versi/configuration Hermes Agent yang terinstall.
+
+---
+
 # 🔥 VPS vs Termux
 
 | Capability | 🖥 VPS Mode | 📱 Termux Mode |
@@ -279,6 +328,10 @@ hermeslaunch logs
 hermeslaunch restart
 hermeslaunch doctor
 hermeslaunch model
+hermeslaunch provider
+hermeslaunch provider list
+hermeslaunch provider test
+hermeslaunch provider remove
 hermeslaunch backup
 hermeslaunch restore
 ```
@@ -304,6 +357,54 @@ Underlying runtime intentionally berbeda:
 VPS    → systemd
 Termux → tmux + hermes gateway run
 ```
+
+---
+
+
+# 🔌 Provider Manager
+
+HermesLaunch punya menu untuk mengelola **custom AI providers** tanpa edit YAML manual:
+
+```bash
+hermeslaunch provider
+```
+
+```text
+╭──────────────────────────────────────────────╮
+│      HermesLaunch Provider Manager          │
+╰──────────────────────────────────────────────╯
+1. List custom providers
+2. Add provider
+3. Switch provider / model
+4. Test provider
+5. Remove provider
+6. Back
+```
+
+Direct command juga tersedia:
+
+```bash
+hermeslaunch provider list
+hermeslaunch provider test [slug]
+hermeslaunch provider remove [slug]
+```
+
+### Safe Remove
+
+Saat provider dihapus, HermesLaunch:
+
+- membuat backup config + `.env`;
+- tidak menghapus provider lain;
+- mencegah provider aktif langsung dihapus;
+- meminta switch model/provider terlebih dahulu jika masih aktif;
+- mempertahankan shared API key;
+- hanya membersihkan key khusus yang dibuat HermesLaunch;
+- menjalankan `hermes config check`;
+- restart gateway setelah konfigurasi valid.
+
+> Built-in provider Hermes tidak dihapus oleh Provider Manager. Fitur ini ditujukan untuk named/custom providers.
+
+📖 [Provider Manager guide](docs/PROVIDERS.md)
 
 ---
 

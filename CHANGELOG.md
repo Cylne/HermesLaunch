@@ -1,6 +1,20 @@
 # Changelog
 
-## v1.4.0 — All-In AI Stack
+## v1.4.1 — GitHub CI Permission Fix
+
+### Fixed
+- Repository self-test no longer executes `toolbox/hermestools` directly.
+- `hermestools` is invoked through `bash`, so CI works even when executable bits are lost during ZIP/browser/bot uploads.
+- GitHub Actions now syntax-checks all All-In stack scripts before running the repository self-test.
+- Runtime installers still apply executable mode when installing `hermestools` to `/usr/local/bin`.
+
+### Compatibility
+- No provider configuration changes.
+- No 9Router data changes.
+- No Genspark authentication changes.
+- Existing Hermes providers remain preserved.
+
+## v1.4.1 — All-In AI Stack
 
 ### Added
 - `bootstrap-tools.sh` for existing Hermes VPS installations.
@@ -14,7 +28,7 @@
 - Genspark generated skill reference sync with `gsk init-skills`.
 - Hermes skills: `genspark`, `router9`, `ai-stack`.
 - Hermes config/.env backup and rollback on failed provider configuration.
-- `hermeslaunch tools` shortcut on new v1.4.0 VPS installs.
+- `hermeslaunch tools` shortcut on new v1.4.1 VPS installs.
 
 ### Security
 - 9Router defaults to `127.0.0.1:20128`.
@@ -22,7 +36,7 @@
 - Genspark API key is stored locally with mode 600 and never echoed.
 - Unrelated VPS services/projects are not touched.
 
-## [1.4.0] - 2026-08-28
+## [1.4.1] - 2026-08-28
 
 ### Added
 - HermesLaunch Provider Manager for VPS and Termux.

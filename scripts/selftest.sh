@@ -28,7 +28,7 @@ if [[ -n "$scan_out" ]]; then
   exit 1
 fi
 
-"$ROOT/toolbox/hermestools" version
-"$ROOT/toolbox/hermestools" help >/dev/null
+bash "$ROOT/toolbox/hermestools" version
+bash "$ROOT/toolbox/hermestools" help >/dev/null
 
-echo "HermesLaunch v1.4.0 self-test: PASS"
+echo "HermesLaunch v1.4.1 self-test: PASS"

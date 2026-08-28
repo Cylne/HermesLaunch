@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-HL_VERSION="1.4.0"
+HL_VERSION="1.4.1"
 HERMESLAUNCH_REPO="${HERMESLAUNCH_REPO:-Cylne/HermesLaunch}"
 HERMESLAUNCH_REF="${HERMESLAUNCH_REF:-main}"
 HERMES_INSTALL_URL="https://hermes-agent.nousresearch.com/install.sh"
@@ -41,7 +41,7 @@ is_termux() {
 
 termux_notice() {
 cat <<'EOF'
-HermesLaunch v1.4.0 ditujukan untuk VPS Linux + systemd.
+HermesLaunch v1.4.1 ditujukan untuk VPS Linux + systemd.
 
 Kamu sedang menjalankannya di Termux Android.
 Gunakan Termux sebagai SSH client:
@@ -108,8 +108,8 @@ setup_privileges() {
 }
 
 check_platform() {
-  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.4.0 hanya mendukung Linux VPS."
-  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.4.0 membutuhkan systemd."
+  [[ "$(uname -s)" == "Linux" ]] || die "HermesLaunch v1.4.1 hanya mendukung Linux VPS."
+  command -v systemctl >/dev/null 2>&1 || die "systemd tidak ditemukan. HermesLaunch v1.4.1 membutuhkan systemd."
   if is_termux; then
     termux_notice
     exit 2
@@ -929,14 +929,14 @@ case "${1:-status}" in
       exec hermestools "$@"
     else
       echo "HermesTools belum terinstall."
-      echo "Jalankan bootstrap-tools.sh dari repository HermesLaunch v1.4.0."
+      echo "Jalankan bootstrap-tools.sh dari repository HermesLaunch v1.4.1."
       exit 1
     fi
     ;;
   config) "$HERMES_BIN" config ;;
   update) "$HERMES_BIN" update --backup ;;
   version)
-    echo "HermesLaunch v1.4.0"
+    echo "HermesLaunch v1.4.1"
     "$HERMES_BIN" --version
     ;;
   backup)

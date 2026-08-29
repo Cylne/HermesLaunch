@@ -2,377 +2,892 @@
 
 # 🚀 HermesLaunch
 
-### Hermes Agent Deployment Toolkit for Linux VPS & Android Termux
+### Hermes Agent + Telegram + OpenCode + OpenClaw Deployment Toolkit
 
-**One repository — two intentionally different runtime modes.**
+**Satu repository untuk memasang dan mengelola Hermes Agent dengan mudah dari VPS Linux atau Android/Termux.**
 
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
-[![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
+[![Android](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Created by Reii**
 
-[Repository](https://github.com/Cylne/HermesLaunch) · [Termux Guide](docs/TERMUX.md) · [Commands](docs/COMMANDS.md) · [Security](SECURITY.md)
+[Repository](https://github.com/Cylne/HermesLaunch) ·
+[Commands](docs/COMMANDS.md) ·
+[Providers](docs/PROVIDERS.md) ·
+[Termux Guide](docs/TERMUX.md) ·
+[Security](SECURITY.md)
 
 </div>
 
 ---
 
-## ✨ About
+# 📌 Apa itu HermesLaunch?
 
-HermesLaunch adalah deployment/management wrapper independen untuk **Hermes Agent**.
+HermesLaunch adalah deployment dan management wrapper independen untuk **Hermes Agent**.
 
-Tujuannya sederhana: satu repository yang membuat pemasangan Hermes + Telegram lebih praktis, tetapi **tidak menyamakan VPS dan Android Termux**.
+Project ini dibuat agar proses berikut lebih mudah:
+
+- install Hermes Agent;
+- konfigurasi Telegram Bot;
+- konfigurasi provider/model AI;
+- membuat workspace project;
+- menjalankan Hermes Gateway sebagai service;
+- mengelola provider;
+- backup/restore Hermes;
+- memasang OpenCode;
+- memasang OpenClaw;
+- mengelola stack Hermes + OpenCode + OpenClaw dari satu manager.
+
+Arsitektur utama:
 
 ```text
-                        HermesLaunch
-                             │
-               ┌─────────────┴─────────────┐
-               │                           │
-        🖥 Linux VPS                📱 Android Termux
-        VPS Mode                    Mobile Mode
-               │                           │
-        systemd service              native Termux
-        boot-time service            tmux background
-        target 24/7                  best-effort
-               │                           │
-               └──────────┬────────────────┘
-                          ▼
-                    Hermes Agent
-                          │
-                    Telegram Bot
-                          │
-                    AI Provider
+Android / Termux
+      │
+      │ SSH
+      ▼
+ Linux VPS
+      │
+      ▼
+ HermesLaunch
+      │
+      ├── Hermes Agent
+      │     ├── AI Provider
+      │     ├── Telegram Gateway
+      │     └── Workspace
+      │
+      ├── OpenCode
+      │     └── Coding Agent CLI
+      │
+      └── OpenClaw
+            └── Optional separate agent / Gateway
 ```
 
-> HermesLaunch is independent and is not affiliated with or endorsed by Nous Research.
+> HermesLaunch bukan project resmi Nous Research, OpenCode, atau OpenClaw.
+> HermesLaunch hanya membantu deployment dan management tool tersebut.
 
 ---
 
-## 📸 Installation Preview
+# ✅ Yang Dipasang HermesLaunch
 
-<div align="center">
+## Instalasi utama VPS
 
-<img src="assets/installation-complete.png" alt="HermesLaunch installation complete preview" width="900">
-
-**Hermes successfully installed and ready to use.**
-
-</div>
-
-> Screenshot di atas menunjukkan contoh hasil instalasi Hermes pada Linux VPS. Tampilan dapat sedikit berbeda tergantung versi Hermes dan environment yang digunakan.
-
----
-
-# ⚡ One-Line Install
-
-Repository:
+HermesLaunch akan menyiapkan:
 
 ```text
-https://github.com/Cylne/HermesLaunch.git
-```
-
-Command yang sama bisa dijalankan dari VPS atau Termux:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
-```
-
-`bootstrap.sh` mendeteksi environment dan mengambil installer yang sesuai:
-
-```text
-Linux VPS       → install-vps.sh
-Android Termux  → install-termux.sh
-```
-
-Atau clone manual:
-
-```bash
-git clone https://github.com/Cylne/HermesLaunch.git
-cd HermesLaunch
-bash install.sh
-```
-
-
----
-
-# 🧭 Apa yang Harus Diisi Saat Setup?
-
-| Field | Isi apa? | Contoh |
-|---|---|---|
-| **Bot Token** | Token bot dari `@BotFather` | `123456789:AA...` |
-| **Telegram numeric User ID** | ID angka akun yang boleh menggunakan bot. Ambil dari `@userinfobot` / `@get_id_bot` | `1447854280` |
-| **Home Channel Chat ID** | Tujuan default cron/notifikasi. Untuk DM pribadi **cukup tekan Enter** agar sama dengan User ID utama | `1447854280` |
-| **Home Channel grup** | Jika notifikasi mau ke grup/forum, gunakan Chat ID grup | `-1001234567890` |
-| **Provider Name** | Label provider agar gampang dikenali | `GodenAPI`, `OpenRouter`, `9Router` |
-| **API Base URL** | Base endpoint provider, biasanya `/v1` | `https://api.example.com/v1` |
-| **API Key** | Secret API key provider | input disembunyikan |
-| **Compatibility** | Untuk mayoritas OpenAI-compatible pilih `1` | `1` |
-| **Model ID** | ID model persis dari provider | `kimi-k2.5` |
-| **Context Length** | Opsional. Kalau tidak tahu tekan Enter | Enter |
-| **Workspace** | Folder default project Hermes | `/root/Reii` |
-
-### Contoh Telegram pribadi
-
-```text
-Telegram numeric User ID: 1447854280
-
-Home Channel = tujuan default cron/notifikasi.
-Kalau ingin masuk ke DM akun utama (1447854280), cukup tekan Enter.
-Home Channel Chat ID [1447854280]:
-```
-
-Pada baris terakhir **cukup tekan Enter**.
-
-`Home Channel` harus berupa **Chat ID angka** — bukan tulisan `ID`, bukan `@username`, dan bukan nama channel.
-
-Home channel dapat diganti kemudian dari Telegram menggunakan `/sethome`.
-
----
-
-# 🖥 VPS Mode
-
-**Untuk deployment always-on / production-style.**
-
-```text
-Linux VPS
-   ↓
-HermesLaunch
-   ↓
 Hermes Agent
-   ↓
-systemd
-   ↓
-Telegram Gateway
+Hermes Telegram Gateway
+HermesLaunch Manager
+AI Provider configuration
+Workspace project
+systemd service
 ```
 
-### Characteristics
+Dependency dasar yang dibutuhkan akan dipasang otomatis jika package manager VPS didukung:
 
-- Linux VPS + `systemd`
-- root/sudo
-- Hermes Gateway sebagai system service
-- auto-start setelah reboot
-- cocok untuk bot Telegram 24/7
-- HP/Termux boleh ditutup
-
-### Install
-
-```bash
-ssh root@IP_VPS
-curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```text
+ca-certificates
+curl
+git
+unzip
+zip
+python3
+libatomic
 ```
 
-Setelah selesai:
+Hermes Agent sendiri dipasang menggunakan installer resmi Hermes.
+
+## Multi-Agent Stack
+
+Saat instalasi VPS selesai, HermesLaunch akan bertanya:
+
+```text
+Install OpenCode + OpenClaw manager juga? [Y/n]
+```
+
+Jika memilih `Y`, HermesLaunch akan memasang:
+
+```text
+agentstack
+OpenCode
+OpenClaw
+Hermes skills:
+  /opencode
+  /openclaw
+  /multi-agent
+```
+
+Dependency tambahan yang dapat dipasang:
+
+```text
+jq
+```
+
+### OpenCode
+
+OpenCode dipasang dari installer resmi:
 
 ```bash
-hermeslaunch status
-hermeslaunch logs
+curl -fsSL https://opencode.ai/install | bash
+```
+
+### OpenClaw
+
+OpenClaw dipasang dari installer resmi dalam mode tanpa onboarding awal:
+
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
+```
+
+Setelah itu onboarding dapat dijalankan melalui:
+
+```bash
+agentstack openclaw onboard
 ```
 
 ---
 
-# 📱 Termux Mobile Mode — No VPS
+# 🖥️ Mode yang Didukung
 
-**Hermes berjalan langsung di Android.**
+| Mode | Hermes | Telegram | OpenCode/OpenClaw Manager | Background Runtime | Rekomendasi |
+|---|:---:|:---:|:---:|---|---|
+| Linux VPS + systemd | ✅ | ✅ | ✅ | systemd | ⭐ Paling direkomendasikan |
+| Android Termux Native | ✅ | ✅ | Tidak menjadi target utama AgentStack | tmux | Best-effort |
+| Android → SSH → VPS | ✅ | ✅ | ✅ | systemd VPS | ⭐ Cocok jika tidak punya laptop |
 
-Termux Mode bukan VPS Mode yang dibungkus Ubuntu/proot.
-
-```text
-Android
-   ↓
-Termux native
-   ↓
-Hermes Agent
-   ↓
-tmux
-   ↓
-hermes gateway run
-   ↓
-Telegram
-```
-
-### Tidak butuh
-
-```text
-❌ VPS
-❌ Ubuntu proot
-❌ systemd
-```
-
-### Menggunakan
-
-```text
-✅ Termux native
-✅ installer Hermes Termux-aware
-✅ tmux
-✅ hermes gateway run
-✅ optional wake-lock
-✅ optional Termux:Boot helper
-```
-
-### Install
-
-```bash
-pkg update -y
-pkg install -y git curl
-
-curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
-```
-
-Termux installer kemudian menjalankan wizard resmi Hermes untuk:
-
-1. provider/model;
-2. Telegram Gateway;
-3. Bot Token;
-4. Telegram numeric User ID.
-
-Setelah setup:
-
-```bash
-hermeslaunch status
-hermeslaunch logs
-```
-
-### ⚠️ Termux is best-effort
-
-Android bisa suspend/kill background process. Karena itu Termux tidak boleh didokumentasikan sebagai setara dengan systemd VPS.
-
-Untuk membantu:
-
-- nonaktifkan battery optimization Termux;
-- izinkan background/autostart bila ROM mendukung;
-- jangan force-stop Termux;
-- wake-lock dipakai bila tersedia;
-- Termux:Boot helper bersifat opsional.
-
-Jika target utama adalah uptime stabil 24/7, gunakan **VPS Mode**.
-
-📖 [Tutorial Termux lengkap](docs/TERMUX.md)
+Jika tujuan kamu adalah bot Telegram yang hidup **24/7**, gunakan VPS.
 
 ---
 
+# 📋 Persiapan Sebelum Install
 
-# 🤖 Telegram Bot Features
+Sebelum menjalankan installer, siapkan beberapa hal berikut.
 
-HermesLaunch menghubungkan Hermes Agent ke Telegram Gateway. Setelah gateway aktif, fitur Telegram berasal dari Hermes dan dapat mencakup:
+## 1. VPS
 
-| Feature / Command | Fungsi |
-|---|---|
-| **Private DM & Group Chat** | Gunakan Hermes dari chat pribadi maupun grup yang dikonfigurasi |
-| **Allowlist** | Batasi akun Telegram yang boleh memakai bot |
-| `/new` / `/reset` | Mulai percakapan/session baru |
-| `/model` | Lihat atau ganti provider + model dari Telegram |
-| `/status` | Lihat informasi session aktif |
-| `/sessions` | Lihat dan cari session sebelumnya |
-| `/resume` | Lanjutkan session lama |
-| `/title` | Beri nama session |
-| `/retry` | Ulangi respons terakhir |
-| `/undo` | Hapus exchange terakhir |
-| `/compress` | Kompres context conversation |
-| `/usage` | Lihat penggunaan token session |
-| `/insights` | Lihat usage analytics |
-| `/stop` | Hentikan agent yang sedang berjalan |
-| `/approve` | Izinkan command berisiko yang menunggu approval |
-| `/deny` | Tolak command berisiko |
-| `/sethome` | Jadikan DM/grup saat ini sebagai tujuan cron/notifikasi |
-| `/topic` | Multi-session topic mode pada Telegram DM bila didukung/configured |
-| `/commands` | Lihat command yang tersedia |
-| **Dynamic skill commands** | Skill Hermes yang terpasang dapat muncul sebagai slash command |
+Direkomendasikan:
 
-### Home Channel
+```text
+Ubuntu / Debian Linux
+systemd aktif
+root atau user dengan sudo
+internet aktif
+```
 
-Untuk bot pribadi:
+Cek systemd:
+
+```bash
+systemctl --version
+```
+
+Cek OS:
+
+```bash
+cat /etc/os-release
+```
+
+Cek arsitektur:
+
+```bash
+uname -m
+```
+
+---
+
+## 2. Telegram Bot Token
+
+Buat bot melalui Telegram:
+
+1. buka `@BotFather`;
+2. kirim `/newbot`;
+3. masukkan nama bot;
+4. masukkan username bot;
+5. salin Bot Token.
+
+Contoh format token:
+
+```text
+123456789:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Jangan upload atau publish Bot Token ke GitHub.**
+
+---
+
+## 3. Telegram Numeric User ID
+
+HermesLaunch menggunakan numeric User ID untuk allowlist.
+
+Kamu dapat mengambil ID menggunakan bot seperti:
+
+```text
+@userinfobot
+@get_id_bot
+```
+
+Contoh:
+
+```text
+1447854280
+```
+
+Yang digunakan adalah **angka**, bukan:
+
+```text
+@username
+nama akun
+link Telegram
+```
+
+Multi-user dapat diisi menggunakan koma:
+
+```text
+111111111,222222222
+```
+
+---
+
+## 4. Home Channel Chat ID
+
+Home Channel adalah tujuan default untuk cron, reminder, atau notifikasi Hermes.
+
+### Jika bot hanya digunakan melalui DM pribadi
+
+Gunakan User ID kamu sendiri.
+
+Contoh:
 
 ```text
 Telegram User ID : 1447854280
 Home Channel     : 1447854280
 ```
 
-Untuk grup/forum, Home Channel menggunakan Chat ID grup seperti:
+Saat installer menampilkan:
+
+```text
+Home Channel Chat ID [1447854280]:
+```
+
+cukup tekan **Enter**.
+
+### Jika menggunakan grup
+
+Chat ID grup biasanya berbentuk:
 
 ```text
 -1001234567890
 ```
 
-Cron, reminder, dan proactive delivery Hermes dapat diarahkan ke Home Channel.
-
-> Ketersediaan command tertentu mengikuti versi/configuration Hermes Agent yang terinstall.
+Home Channel dapat diganti kemudian dari Hermes/Telegram jika fitur tersebut tersedia pada versi Hermes yang digunakan.
 
 ---
 
-# 🔥 VPS vs Termux
+## 5. AI Provider
 
-| Capability | 🖥 VPS Mode | 📱 Termux Mode |
-|---|:---:|:---:|
-| Hermes CLI | ✅ | ✅ |
-| Telegram Gateway | ✅ | ✅ |
-| AI Provider | ✅ | ✅ |
-| Project workspace | ✅ | ✅ |
-| VPS required | ✅ | ❌ |
-| Ubuntu/proot on Android | — | ❌ |
-| Supervisor | systemd | tmux |
-| Boot persistence | ✅ native | ⚠️ Termux:Boot helper |
-| Android can kill process | ❌ | ✅ |
-| Docker isolation | possible | ❌ |
-| 24/7 reliability target | ✅ | best-effort |
+Siapkan:
 
----
-
-# 🛠 HermesLaunch Commands
-
-### VPS
-
-```bash
-hermeslaunch status
-hermeslaunch logs
-hermeslaunch restart
-hermeslaunch doctor
-hermeslaunch model
-hermeslaunch provider
-hermeslaunch provider list
-hermeslaunch provider test
-hermeslaunch provider remove
-hermeslaunch backup
-hermeslaunch restore
+```text
+Provider Name
+API Base URL
+API Key
+Model ID
 ```
 
-### Termux
+Contoh:
+
+```text
+Provider Name : MainAPI
+API Base URL  : https://api.example.com/v1
+API Key       : sk-xxxxxxxx
+Model ID      : model-coding
+```
+
+Untuk endpoint remote, gunakan **HTTPS**.
+
+HermesLaunch menolak endpoint remote biasa seperti:
+
+```text
+http://example.com
+```
+
+HTTP hanya diperbolehkan untuk localhost seperti:
+
+```text
+http://127.0.0.1:8000/v1
+```
+
+---
+
+# ⭐ Cara Install yang Direkomendasikan — Android → VPS
+
+Ini adalah jalur yang direkomendasikan jika kamu menggunakan HP Android dan tidak punya laptop.
+
+---
+
+## STEP 1 — Install Termux
+
+Gunakan Termux yang masih mendapat update.
+
+Buka Termux lalu jalankan:
+
+```bash
+pkg update -y
+pkg upgrade -y
+pkg install -y openssh git curl
+```
+
+Cek SSH:
+
+```bash
+ssh -V
+```
+
+---
+
+## STEP 2 — Login ke VPS
+
+Format:
+
+```bash
+ssh root@IP_VPS
+```
+
+Contoh:
+
+```bash
+ssh root@123.123.123.123
+```
+
+Saat pertama kali connect, biasanya muncul:
+
+```text
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+ketik:
+
+```text
+yes
+```
+
+lalu masukkan password VPS.
+
+Setelah berhasil, prompt biasanya berubah menjadi seperti:
+
+```text
+root@ubuntu:~#
+```
+
+Semua command instalasi berikut dijalankan **di dalam VPS**, bukan di Termux lokal.
+
+---
+
+# 🚀 Install HermesLaunch
+
+## Cara 1 — One-Line Installer
+
+Ini adalah cara paling mudah.
+
+Di VPS jalankan:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```
+
+`bootstrap.sh` akan mendeteksi environment.
+
+```text
+Linux VPS      → install-vps.sh
+Android Termux → install-termux.sh
+```
+
+Untuk VPS, installer kemudian akan:
+
+1. memeriksa Linux + systemd;
+2. memasang dependency dasar;
+3. memasang Hermes Agent jika belum ada;
+4. backup config Hermes lama jika ada;
+5. membuka wizard Telegram;
+6. membuka wizard AI Provider;
+7. membuat workspace;
+8. mengetes model jika dipilih;
+9. memasang Telegram Gateway sebagai system service;
+10. memasang command `hermeslaunch`;
+11. menawarkan OpenCode + OpenClaw AgentStack.
+
+---
+
+## Cara 2 — Clone Repository
+
+Jika ingin menyimpan source HermesLaunch di VPS:
+
+```bash
+apt update -y
+apt install -y git curl
+git clone https://github.com/Cylne/HermesLaunch.git
+cd HermesLaunch
+bash install.sh
+```
+
+Jika repository sudah pernah diclone:
+
+```bash
+cd HermesLaunch
+git pull
+bash install.sh
+```
+
+---
+
+# 🧙 Panduan Wizard HermesLaunch
+
+Installer VPS menggunakan wizard 3 tahap.
+
+---
+
+## Tahap 1/3 — Telegram
+
+Installer akan meminta:
+
+```text
+Bot Token dari @BotFather:
+```
+
+Paste Bot Token.
+
+Input token disembunyikan.
+
+Kemudian:
+
+```text
+Telegram numeric User ID:
+```
+
+Isi ID angka Telegram.
+
+Contoh:
+
+```text
+1447854280
+```
+
+Untuk beberapa user:
+
+```text
+111111111,222222222
+```
+
+Kemudian:
+
+```text
+Home Channel Chat ID [1447854280]:
+```
+
+Jika bot digunakan di DM pribadi, tekan:
+
+```text
+Enter
+```
+
+---
+
+## Tahap 2/3 — AI Provider
+
+### Provider Name
+
+Contoh:
+
+```text
+MainAPI
+OpenRouter
+GodenAPI
+MyProvider
+```
+
+Provider Name hanya label agar mudah dikenali.
+
+---
+
+### API Base URL
+
+Contoh OpenAI-compatible:
+
+```text
+https://api.example.com/v1
+```
+
+Jangan isi endpoint chat lengkap seperti:
+
+```text
+https://api.example.com/v1/chat/completions
+```
+
+Yang diminta adalah **Base URL**.
+
+---
+
+### API Key
+
+Masukkan key dari provider.
+
+Contoh:
+
+```text
+sk-xxxxxxxxxxxxxxxx
+```
+
+Secret akan disimpan pada:
+
+```text
+~/.hermes/.env
+```
+
+dengan permission yang dibatasi.
+
+---
+
+### API Compatibility
+
+HermesLaunch menyediakan:
+
+```text
+1. Chat Completions (OpenAI-compatible)
+2. Responses / Codex
+3. Anthropic Messages
+```
+
+Jika provider mengatakan:
+
+```text
+OpenAI Compatible API
+/v1/chat/completions
+```
+
+pilih:
+
+```text
+1
+```
+
+Jika tidak tahu, pilihan `1` adalah default yang paling umum.
+
+---
+
+### Model Discovery
+
+Installer dapat mencoba:
+
+```text
+GET /models
+```
+
+Jika provider mendukungnya, HermesLaunch akan menampilkan daftar model.
+
+Contoh:
+
+```text
+1. model-a
+2. model-b
+3. coding-model
+```
+
+Jika `/models` tidak tersedia, kamu tetap dapat memasukkan Model ID secara manual.
+
+---
+
+### Model ID
+
+Model ID harus sama persis dengan ID dari provider.
+
+Contoh:
+
+```text
+kimi-k2.5
+deepseek-v3
+coding-model
+```
+
+Jangan menebak Model ID jika provider memiliki dokumentasi sendiri.
+
+---
+
+### Context Length
+
+Contoh:
+
+```text
+65536
+131072
+200000
+```
+
+Jika tidak tahu, cukup tekan:
+
+```text
+Enter
+```
+
+dan gunakan konfigurasi/default provider.
+
+---
+
+## Tahap 3/3 — Workspace
+
+Workspace adalah folder default tempat Hermes mengerjakan project.
+
+Default:
+
+```text
+/root/Reii
+```
+
+atau untuk user non-root:
+
+```text
+/home/USER/Reii
+```
+
+Jika tidak ingin mengganti, cukup tekan Enter.
+
+HermesLaunch juga membuat:
+
+```text
+AGENTS.md
+```
+
+di workspace sebagai aturan kerja dasar dan proteksi secret.
+
+---
+
+# 🧪 Tes Provider
+
+Installer akan menawarkan:
+
+```text
+Tes satu prompt AI setelah setup? Ini memakai sedikit quota/token. [Y/n]
+```
+
+Pilih:
+
+```text
+Y
+```
+
+jika ingin memastikan provider + model benar-benar dapat menjawab.
+
+HermesLaunch akan mencoba prompt kecil dan memeriksa hasilnya.
+
+Jika tes gagal, gateway tetap dapat dipasang sehingga konfigurasi masih bisa diperbaiki sesudah instalasi.
+
+---
+
+# 🤖 Install OpenCode + OpenClaw
+
+Di akhir instalasi VPS akan muncul:
+
+```text
+Install OpenCode + OpenClaw manager juga? [Y/n]
+```
+
+Direkomendasikan pilih:
+
+```text
+Y
+```
+
+Jika memilih `Y`, HermesLaunch menjalankan AgentStack.
+
+Setelah selesai:
+
+```bash
+agentstack status
+```
+
+atau:
+
+```bash
+hermeslaunch agents status
+```
+
+---
+
+# ✅ Cek Setelah Instalasi
+
+## Cek HermesLaunch
+
+```bash
+hermeslaunch version
+```
+
+## Cek Hermes Gateway
 
 ```bash
 hermeslaunch status
+```
+
+## Cek log
+
+```bash
+hermeslaunch logs
+```
+
+Keluar dari log live dengan:
+
+```text
+CTRL + C
+```
+
+## Cek Hermes
+
+```bash
+hermes --version
+```
+
+## Jalankan doctor
+
+```bash
+hermeslaunch doctor
+```
+
+## Cek Multi-Agent Stack
+
+```bash
+agentstack status
+```
+
+atau:
+
+```bash
+hermeslaunch agents status
+```
+
+---
+
+# 💬 Tes Telegram
+
+Setelah gateway aktif:
+
+1. buka bot Telegram yang dibuat;
+2. tekan Start jika diperlukan;
+3. kirim pesan.
+
+Contoh:
+
+```text
+Halo Hermes, apakah kamu online?
+```
+
+Jika provider, Telegram token, dan allowlist benar, Hermes akan menjawab.
+
+---
+
+# 🛠️ Cara Menggunakan HermesLaunch
+
+## Status
+
+```bash
+hermeslaunch status
+```
+
+Digunakan untuk mengecek Hermes Gateway.
+
+---
+
+## Start
+
+```bash
 hermeslaunch start
-hermeslaunch stop
-hermeslaunch restart
-hermeslaunch logs
-hermeslaunch doctor
-hermeslaunch model
-hermeslaunch gateway-setup
-hermeslaunch backup
-hermeslaunch restore
-```
-
-Underlying runtime intentionally berbeda:
-
-```text
-VPS    → systemd
-Termux → tmux + hermes gateway run
 ```
 
 ---
 
+## Stop
 
-# 🔌 Provider Manager
+```bash
+hermeslaunch stop
+```
 
-HermesLaunch punya menu untuk mengelola **custom AI providers** tanpa edit YAML manual:
+---
+
+## Restart
+
+```bash
+hermeslaunch restart
+```
+
+Gunakan setelah perubahan konfigurasi jika diperlukan.
+
+---
+
+## Logs
+
+```bash
+hermeslaunch logs
+```
+
+Pada VPS, log dibaca dari service:
+
+```text
+hermes-gateway
+```
+
+---
+
+## Doctor
+
+```bash
+hermeslaunch doctor
+```
+
+Digunakan untuk diagnosis Hermes.
+
+---
+
+## Model Manager
+
+```bash
+hermeslaunch model
+```
+
+Command ini membuka model/provider wizard milik Hermes.
+
+Gunakan untuk:
+
+- mengganti model;
+- mengganti provider;
+- menambahkan provider;
+- mengecek konfigurasi model.
+
+---
+
+## Config
+
+```bash
+hermeslaunch config
+```
+
+---
+
+## Version
+
+```bash
+hermeslaunch version
+```
+
+---
+
+# 🔌 HermesLaunch Provider Manager
+
+Buka menu:
 
 ```bash
 hermeslaunch provider
 ```
 
+Menu:
+
 ```text
-╭──────────────────────────────────────────────╮
-│      HermesLaunch Provider Manager          │
-╰──────────────────────────────────────────────╯
 1. List custom providers
 2. Add provider
 3. Switch provider / model
@@ -381,152 +896,278 @@ hermeslaunch provider
 6. Back
 ```
 
-Direct command juga tersedia:
+---
+
+## List Provider
 
 ```bash
 hermeslaunch provider list
-hermeslaunch provider test [slug]
-hermeslaunch provider remove [slug]
 ```
-
-### Safe Remove
-
-Saat provider dihapus, HermesLaunch:
-
-- membuat backup config + `.env`;
-- tidak menghapus provider lain;
-- mencegah provider aktif langsung dihapus;
-- meminta switch model/provider terlebih dahulu jika masih aktif;
-- mempertahankan shared API key;
-- hanya membersihkan key khusus yang dibuat HermesLaunch;
-- menjalankan `hermes config check`;
-- restart gateway setelah konfigurasi valid.
-
-> Built-in provider Hermes tidak dihapus oleh Provider Manager. Fitur ini ditujukan untuk named/custom providers.
-
-📖 [Provider Manager guide](docs/PROVIDERS.md)
 
 ---
 
-# 💾 Backup / Migration
+## Add Provider
 
 ```bash
-hermeslaunch backup ~/hermes-backup.zip
+hermeslaunch provider add
 ```
 
-Restore:
+HermesLaunch akan membuka wizard model/provider resmi Hermes.
+
+---
+
+## Switch Provider
 
 ```bash
-hermeslaunch restore ~/hermes-backup.zip
+hermeslaunch provider switch
 ```
 
-> Full Hermes backup dapat berisi API keys/Bot Token dan harus dianggap sebagai secret.
+Gateway akan direstart setelah pergantian provider/model.
 
 ---
 
-# 🔐 Security
+## Test Provider
 
-- Telegram user allowlist tetap direkomendasikan/wajib saat setup.
-- Jangan publish `.env`.
-- Jangan publish Hermes backup.
-- Gunakan HTTPS untuk remote provider endpoints.
-- Hermes dengan terminal tools memiliki akses sesuai privilege OS tempat ia berjalan.
-- Root VPS berarti agent bisa memiliki privilege root.
+Format:
 
----
+```bash
+hermeslaunch provider test PROVIDER_SLUG
+```
 
-# 📂 Structure
+Contoh:
+
+```bash
+hermeslaunch provider test mainapi
+```
+
+Manager akan mencoba endpoint:
 
 ```text
-HermesLaunch/
-├── install.sh
-├── install-vps.sh
-├── install-termux.sh
-├── bootstrap.sh
-├── README.md
-├── SECURITY.md
-├── CHANGELOG.md
-├── LICENSE
-├── VERSION
-├── docs/
-│   ├── TERMUX.md
-│   ├── PROVIDERS.md
-│   ├── COMMANDS.md
-│   ├── MIGRATION.md
-│   └── PUBLISHING.md
-└── scripts/
-    ├── release.sh
-    └── set-repo.sh
+BASE_URL/models
+```
+
+dan tidak mencetak API key.
+
+---
+
+## Remove Provider
+
+```bash
+hermeslaunch provider remove PROVIDER_SLUG
+```
+
+Sebelum menghapus provider, HermesLaunch akan:
+
+- membuat backup config;
+- memastikan provider bukan provider aktif;
+- meminta konfirmasi;
+- menjaga provider lain;
+- menjaga shared secret yang masih digunakan provider lain;
+- menjalankan config check;
+- restart Gateway jika konfigurasi valid.
+
+---
+
+# 🧠 Cara Menggunakan Hermes Agent Langsung
+
+Selain Telegram, Hermes dapat digunakan langsung di terminal VPS.
+
+Jalankan:
+
+```bash
+hermes
+```
+
+Atau gunakan command Hermes sesuai versi yang terpasang.
+
+Beberapa konfigurasi utama:
+
+```bash
+hermes model
+hermes tools
+hermes gateway setup
+hermes config
+hermes doctor
+```
+
+Untuk melihat help versi Hermes yang sedang terpasang:
+
+```bash
+hermes --help
 ```
 
 ---
 
-# 🤝 Credits
+# 💻 OpenCode
 
-**HermesLaunch — Created by Reii**
+OpenCode adalah coding agent CLI terpisah.
 
-Hermes Agent is a separate project by Nous Research.
+Cek status:
 
-<div align="center">
+```bash
+agentstack opencode status
+```
 
-### HermesLaunch
+Install/repair:
 
-**VPS when you need uptime. Termux when you want it directly on Android.**
+```bash
+agentstack opencode install
+```
 
-Created by **Reii**
+Update:
 
-</div>
-
+```bash
+agentstack opencode update
+```
 
 ---
 
-# 🤖 Multi-Agent Stack — Hermes + OpenCode + OpenClaw
+## Konfigurasi Provider OpenCode
 
-HermesLaunch v1.5.0 menyederhanakan stack menjadi tiga tool yang jelas:
+Masuk ke folder project:
+
+```bash
+cd /root/Reii
+```
+
+Jalankan:
+
+```bash
+opencode
+```
+
+Di dalam OpenCode TUI, jalankan:
 
 ```text
-Telegram
-   ↓
-Hermes Agent
-   └── optional coding delegation → OpenCode
-
-OpenClaw
-   └── optional separate Gateway / agent runtime
+/connect
 ```
 
-## Fresh VPS
+Pilih provider dan masukkan credential.
 
-```bash
-bash install.sh
-```
-
-Setelah Hermes selesai, wizard menawarkan:
+Untuk memilih model:
 
 ```text
-Install OpenCode + OpenClaw manager juga? [Y/n]
+/models
 ```
 
-## Hermes sudah terinstall
+OpenCode memiliki konfigurasi provider sendiri.
 
-Setelah v1.5.0 dipublish:
+**API key Hermes tidak otomatis disalin ke OpenCode.**
+
+---
+
+## Jalankan OpenCode pada Project
+
+Contoh:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-agents.sh | bash
+cd /root/Reii/MyProject
+opencode
 ```
 
-Atau dari clone/ZIP:
+Kemudian minta:
+
+```text
+Analyze project ini, cek error build dan berikan perbaikannya.
+```
+
+Non-interactive:
 
 ```bash
-bash agentstack/install-agentstack.sh
+agentstack opencode run "Analyze repository ini dan jelaskan struktur project."
 ```
 
-## Manager
+---
+
+# 🦞 OpenClaw
+
+OpenClaw adalah runtime/agent terpisah dari Hermes.
+
+Install/repair:
+
+```bash
+agentstack openclaw install
+```
+
+Jalankan onboarding:
+
+```bash
+agentstack openclaw onboard
+```
+
+Onboarding akan menjalankan konfigurasi OpenClaw dan memasang daemon jika didukung.
+
+Cek status:
+
+```bash
+agentstack openclaw status
+```
+
+Doctor:
+
+```bash
+agentstack openclaw doctor
+```
+
+Start:
+
+```bash
+agentstack openclaw start
+```
+
+Restart:
+
+```bash
+agentstack openclaw restart
+```
+
+Stop:
+
+```bash
+agentstack openclaw stop
+```
+
+Update:
+
+```bash
+agentstack openclaw update
+```
+
+---
+
+## ⚠️ Telegram Hermes dan OpenClaw
+
+Jika Hermes sudah menggunakan Telegram Bot:
+
+```text
+Bot A → Hermes
+```
+
+dan OpenClaw juga ingin memakai Telegram, gunakan bot berbeda:
+
+```text
+Bot B → OpenClaw
+```
+
+Jangan menjalankan dua runtime Telegram polling dengan token bot yang sama secara bersamaan.
+
+---
+
+# 🧩 AgentStack Manager
+
+Buka menu:
 
 ```bash
 agentstack
 ```
 
-Menu:
+atau:
+
+```bash
+hermeslaunch agents
+```
+
+Menu utama:
 
 ```text
 1. Setup / repair ALL
@@ -538,17 +1179,635 @@ Menu:
 7. Exit
 ```
 
-Direct commands:
+---
+
+## Install / Repair Semua
+
+```bash
+agentstack setup
+```
+
+Command ini menyiapkan:
+
+```text
+Hermes verification
+OpenCode
+OpenClaw
+Hermes multi-agent skills
+```
+
+---
+
+## Status Semua
 
 ```bash
 agentstack status
-agentstack doctor
+```
 
+---
+
+## Doctor Semua
+
+```bash
+agentstack doctor
+```
+
+---
+
+## Refresh Skills Hermes
+
+```bash
+agentstack skills
+```
+
+Skills yang dipasang:
+
+```text
+/opencode
+/openclaw
+/multi-agent
+```
+
+Setelah refresh skill, buat session Hermes baru atau reset session jika diperlukan agar perubahan terbaca.
+
+---
+
+# 🔄 Jika Hermes Sudah Terpasang Sebelumnya
+
+Tidak perlu menghapus Hermes.
+
+Install AgentStack saja:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-agents.sh | bash
+```
+
+Atau dari clone repo:
+
+```bash
+cd HermesLaunch
+bash agentstack/install-agentstack.sh
+```
+
+Konfigurasi Hermes lama tidak otomatis diganti oleh OpenCode/OpenClaw.
+
+---
+
+# 📱 Install HermesLaunch Langsung di Termux — Tanpa VPS
+
+HermesLaunch juga memiliki Termux Mobile Mode.
+
+> Mode ini best-effort. Android dapat menghentikan background process kapan saja.
+
+Install:
+
+```bash
+pkg update -y
+pkg install -y git curl tmux
+```
+
+Lalu:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```
+
+Installer Termux akan:
+
+1. memasang Hermes menggunakan installer resmi;
+2. membuka `hermes model`;
+3. membuka `hermes gateway setup`;
+4. memasang manager `hermeslaunch`;
+5. membuat workspace `~/Reii`;
+6. menjalankan Gateway melalui `tmux`;
+7. menawarkan helper Termux:Boot jika flow mendukungnya.
+
+---
+
+## Command Termux
+
+```bash
+hermeslaunch status
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch logs
+hermeslaunch doctor
+hermeslaunch model
+hermeslaunch provider
+hermeslaunch gateway-setup
+hermeslaunch backup
+hermeslaunch restore
+hermeslaunch update
+hermeslaunch version
+```
+
+Runtime Termux:
+
+```text
+tmux
+└── hermes gateway run
+```
+
+Bukan:
+
+```text
+systemd
+```
+
+Untuk kestabilan:
+
+- nonaktifkan battery optimization untuk Termux;
+- jangan force-stop Termux;
+- izinkan background activity jika ROM menyediakan;
+- gunakan wake-lock jika tersedia;
+- gunakan Termux:Boot bila ingin mencoba start otomatis.
+
+Untuk uptime 24/7, tetap gunakan VPS.
+
+---
+
+# ♻️ Update
+
+Ada **dua jenis update** yang berbeda.
+
+---
+
+## 1. Update Hermes Agent
+
+Command:
+
+```bash
+hermeslaunch update
+```
+
+Command ini menjalankan update Hermes Agent dengan backup.
+
+**Command ini tidak melakukan `git pull` repository HermesLaunch.**
+
+---
+
+## 2. Update HermesLaunch
+
+Jika menggunakan clone Git:
+
+```bash
+cd ~/HermesLaunch
+git pull
+bash install.sh
+```
+
+Sesuaikan path jika repository berada di folder lain.
+
+Atau cukup jalankan bootstrap terbaru:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap.sh | bash
+```
+
+Installer akan membuat backup konfigurasi Hermes yang relevan sebelum konfigurasi ulang.
+
+---
+
+## Update OpenCode
+
+```bash
+agentstack opencode update
+```
+
+---
+
+## Update OpenClaw
+
+```bash
+agentstack openclaw update
+```
+
+---
+
+# 💾 Backup & Restore
+
+## Backup
+
+Default:
+
+```bash
+hermeslaunch backup
+```
+
+Atau tentukan nama file:
+
+```bash
+hermeslaunch backup ~/hermes-backup.zip
+```
+
+Full backup Hermes dapat berisi:
+
+```text
+API keys
+Telegram Bot Token
+config
+session data
+credential lain
+```
+
+Jangan upload backup ke repository public.
+
+---
+
+## Restore
+
+```bash
+hermeslaunch restore ~/hermes-backup.zip
+```
+
+Saat restore, Gateway dihentikan sementara dan dijalankan lagi setelah import.
+
+---
+
+# 🧯 Troubleshooting
+
+## `hermeslaunch: command not found`
+
+Cek:
+
+```bash
+command -v hermeslaunch
+```
+
+Pada VPS normal seharusnya:
+
+```text
+/usr/local/bin/hermeslaunch
+```
+
+Coba:
+
+```bash
+hash -r
+```
+
+atau login ulang ke SSH.
+
+Jika masih tidak ada, jalankan installer lagi.
+
+---
+
+## `hermes: command not found`
+
+Cek:
+
+```bash
+command -v hermes
+```
+
+Coba reload shell:
+
+```bash
+source ~/.bashrc
+```
+
+Lalu:
+
+```bash
+hermes --version
+```
+
+Jika tetap gagal, jalankan kembali HermesLaunch.
+
+---
+
+## Gateway tidak aktif
+
+Cek:
+
+```bash
+hermeslaunch status
+```
+
+Restart:
+
+```bash
+hermeslaunch restart
+```
+
+Lihat log:
+
+```bash
+hermeslaunch logs
+```
+
+Cek systemd:
+
+```bash
+systemctl status hermes-gateway --no-pager
+```
+
+---
+
+## Bot Telegram tidak membalas
+
+Cek secara berurutan:
+
+```bash
+hermeslaunch status
+hermeslaunch logs
+hermeslaunch doctor
+```
+
+Pastikan:
+
+```text
+Bot Token benar
+Telegram User ID berupa angka
+User ID masuk allowlist
+provider dapat menjawab
+Model ID benar
+Gateway berjalan
+```
+
+Tes Hermes tanpa Telegram:
+
+```bash
+hermes
+```
+
+Jika Hermes CLI tidak dapat menjawab, perbaiki provider/model terlebih dahulu.
+
+---
+
+## Provider gagal
+
+Buka:
+
+```bash
+hermeslaunch model
+```
+
+atau:
+
+```bash
+hermeslaunch provider
+```
+
+Cek:
+
+```text
+Base URL
+API Key
+Compatibility mode
+Model ID
+```
+
+Untuk custom provider:
+
+```bash
+hermeslaunch provider list
+```
+
+lalu:
+
+```bash
+hermeslaunch provider test PROVIDER_SLUG
+```
+
+---
+
+## OpenCode tidak ditemukan
+
+Cek:
+
+```bash
+agentstack opencode status
+```
+
+Repair:
+
+```bash
+agentstack opencode install
+```
+
+Kemudian:
+
+```bash
+opencode --version
+```
+
+---
+
+## OpenClaw tidak ditemukan
+
+Repair:
+
+```bash
+agentstack openclaw install
+```
+
+Kemudian:
+
+```bash
+openclaw --version
+```
+
+Onboard:
+
+```bash
+agentstack openclaw onboard
+```
+
+---
+
+## OpenClaw Gateway bermasalah
+
+```bash
+agentstack openclaw status
+agentstack openclaw doctor
+agentstack openclaw restart
+```
+
+---
+
+## AgentStack belum terinstall
+
+Jika:
+
+```bash
+hermeslaunch agents
+```
+
+mengatakan manager belum tersedia, jalankan:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-agents.sh | bash
+```
+
+---
+
+# 🔐 Security
+
+Jangan pernah commit file berikut:
+
+```text
+.env
+API key
+Telegram Bot Token
+password
+private key
+Hermes full backup
+```
+
+Hermes Agent dengan terminal tools berjalan menggunakan privilege user OS tempat Hermes dijalankan.
+
+Jika Hermes dijalankan sebagai:
+
+```text
+root
+```
+
+maka agent berpotensi menjalankan command dengan privilege tinggi.
+
+Gunakan VPS khusus jika memungkinkan dan hindari menyimpan project sensitif yang tidak berhubungan pada workspace agent.
+
+Workspace default HermesLaunch memiliki `AGENTS.md` yang mengingatkan agent agar:
+
+- bekerja di workspace;
+- tidak menyentuh service/project lain tanpa instruksi;
+- tidak mencetak secret;
+- meminta konfirmasi sebelum operasi destruktif di luar workspace.
+
+---
+
+# 📂 Lokasi Penting
+
+Default Hermes Home:
+
+```text
+~/.hermes
+```
+
+Config:
+
+```text
+~/.hermes/config.yaml
+```
+
+Environment/secret:
+
+```text
+~/.hermes/.env
+```
+
+Default workspace VPS root:
+
+```text
+/root/Reii
+```
+
+Manager VPS:
+
+```text
+/usr/local/bin/hermeslaunch
+```
+
+AgentStack manager:
+
+```text
+/usr/local/bin/agentstack
+```
+
+AgentStack shared data:
+
+```text
+/usr/local/share/hermeslaunch-agentstack
+```
+
+---
+
+# 📁 Struktur Repository
+
+```text
+HermesLaunch/
+├── install.sh
+├── install-vps.sh
+├── install-termux.sh
+├── bootstrap.sh
+├── bootstrap-agents.sh
+├── README.md
+├── SECURITY.md
+├── CHANGELOG.md
+├── LICENSE
+├── VERSION
+│
+├── bin/
+│   └── hermeslaunch
+│
+├── agentstack/
+│   ├── agentstack
+│   ├── install-agentstack.sh
+│   └── skills/
+│
+├── assets/
+│   └── installation-complete.png
+│
+├── docs/
+│   ├── COMMANDS.md
+│   ├── MIGRATION.md
+│   ├── MULTI_AGENT.md
+│   ├── PROVIDERS.md
+│   ├── PUBLISHING.md
+│   └── TERMUX.md
+│
+└── scripts/
+    ├── release.sh
+    ├── selftest.sh
+    └── set-repo.sh
+```
+
+---
+
+# ⚡ Quick Command Cheat Sheet
+
+## HermesLaunch
+
+```bash
+hermeslaunch status
+hermeslaunch logs
+hermeslaunch start
+hermeslaunch stop
+hermeslaunch restart
+hermeslaunch doctor
+hermeslaunch model
+hermeslaunch provider
+hermeslaunch config
+hermeslaunch backup
+hermeslaunch restore FILE.zip
+hermeslaunch update
+hermeslaunch version
+```
+
+## AgentStack
+
+```bash
+agentstack
+agentstack setup
+agentstack status
+agentstack doctor
+agentstack skills
+```
+
+## OpenCode
+
+```bash
 agentstack opencode install
 agentstack opencode update
 agentstack opencode status
-agentstack opencode run "Explain this repository"
+agentstack opencode tui .
+agentstack opencode run "PROMPT"
+```
 
+## OpenClaw
+
+```bash
 agentstack openclaw install
 agentstack openclaw onboard
 agentstack openclaw status
@@ -559,38 +1818,50 @@ agentstack openclaw stop
 agentstack openclaw update
 ```
 
-Shortcut dari HermesLaunch:
+---
 
-```bash
-hermeslaunch agents
-```
+# 📚 Official Documentation
 
-## Pembagian fungsi
-
-- **Hermes**: agent utama + Telegram + provider manager lama.
-- **OpenCode**: coding agent CLI. Buka `opencode`, lalu gunakan `/connect` untuk provider.
-- **OpenClaw**: runtime/Gateway agent terpisah. Onboarding hanya dijalankan saat diperlukan.
-
-Jangan menggunakan token Telegram bot yang sama untuk Hermes dan OpenClaw secara bersamaan.
-
-## Hermes skills
+Hermes Agent:
 
 ```text
-/opencode
-/openclaw
-/multi-agent
+https://hermes-agent.nousresearch.com/docs/
 ```
 
-Setelah install skill, jalankan `/reset` atau buat session baru di Hermes.
+OpenCode:
 
+```text
+https://opencode.ai/docs
+```
 
-## Migrasi dari v1.4.x
+OpenClaw:
 
-Saat `agentstack setup`, jika stack lama terdeteksi, wizard menawarkan:
+```text
+https://docs.openclaw.ai/
+```
 
-- hapus command/share `hermestools` lama;
-- stop + remove container Docker `9router`;
-- **tidak menghapus** data `~/.9router`.
+---
 
-Jadi backup/config lama tetap tersedia kalau sewaktu-waktu dibutuhkan.
+# 🤝 Credits
 
+### HermesLaunch
+
+Created by **Reii**
+
+Repository:
+
+```text
+https://github.com/Cylne/HermesLaunch
+```
+
+Hermes Agent, OpenCode, dan OpenClaw adalah project terpisah dengan maintainer masing-masing.
+
+<div align="center">
+
+## HermesLaunch
+
+**Hermes for the main agent. OpenCode for coding. OpenClaw when you need a separate runtime.**
+
+**Created by Reii**
+
+</div>

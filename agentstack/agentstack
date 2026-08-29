@@ -1,0 +1,502 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+STACK_VERSION="1.0.0"
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+SHARE_DIR="${HERMESLAUNCH_AGENTSTACK_SHARE:-/usr/local/share/hermeslaunch-agentstack}"
+SKILL_SRC="$SHARE_DIR/skills"
+
+C_RESET='\033[0m'
+C_CYAN='\033[1;36m'
+C_GREEN='\033[1;32m'
+C_YELLOW='\033[1;33m'
+C_RED='\033[1;31m'
+C_BOLD='\033[1m'
+
+info(){ printf "${C_CYAN}●${C_RESET} %s\n" "$*"; }
+ok(){ printf "${C_GREEN}✓${C_RESET} %s\n" "$*"; }
+warn(){ printf "${C_YELLOW}!${C_RESET} %s\n" "$*" >&2; }
+die(){ printf "${C_RED}✗${C_RESET} %s\n" "$*" >&2; exit 1; }
+
+banner() {
+  printf "${C_BOLD}"
+  cat <<'EOF'
+╭──────────────────────────────────────────────╮
+│        HermesLaunch — Multi-Agent Stack      │
+│        Hermes + OpenCode + OpenClaw          │
+╰──────────────────────────────────────────────╯
+EOF
+  printf "${C_RESET}agentstack v%s\n\n" "$STACK_VERSION"
+}
+
+run_root() {
+  if [[ "$EUID" -eq 0 ]]; then "$@"; else
+    command -v sudo >/dev/null 2>&1 || die "sudo/root diperlukan."
+    sudo "$@"
+  fi
+}
+
+need_tty() {
+  [[ -r /dev/tty && -w /dev/tty ]] || die "Command ini membutuhkan terminal interaktif."
+}
+
+confirm() {
+  local prompt="$1" default="${2:-N}" answer=""
+  if [[ "$default" == "Y" ]]; then
+    printf "%s [Y/n]: " "$prompt" > /dev/tty
+  else
+    printf "%s [y/N]: " "$prompt" > /dev/tty
+  fi
+  IFS= read -r answer < /dev/tty || true
+  answer="${answer:-$default}"
+  [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+install_base_packages() {
+  if command -v apt-get >/dev/null 2>&1; then
+    run_root apt-get update -y
+    DEBIAN_FRONTEND=noninteractive run_root apt-get install -y \
+      ca-certificates curl git unzip jq python3 libatomic1
+  elif command -v dnf >/dev/null 2>&1; then
+    run_root dnf install -y ca-certificates curl git unzip jq python3 libatomic
+  elif command -v yum >/dev/null 2>&1; then
+    run_root yum install -y ca-certificates curl git unzip jq python3 libatomic
+  else
+    for c in curl git python3; do
+      command -v "$c" >/dev/null 2>&1 || die "Dependency '$c' belum tersedia."
+    done
+  fi
+}
+
+hermes_bin() {
+  export PATH="$HOME/.local/bin:$HOME/.hermes/bin:/usr/local/bin:$PATH"
+  command -v hermes 2>/dev/null || true
+}
+
+opencode_bin() {
+  export PATH="$HOME/.opencode/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
+  command -v opencode 2>/dev/null || true
+}
+
+openclaw_bin() {
+  export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+  command -v openclaw 2>/dev/null || true
+}
+
+install_hermes() {
+  local hb
+  hb="$(hermes_bin)"
+  if [[ -n "$hb" ]]; then
+    ok "Hermes sudah tersedia: $("$hb" --version 2>/dev/null | head -n1 || echo installed)"
+    return 0
+  fi
+  die "Hermes belum terinstall. Jalankan installer utama HermesLaunch: bash install.sh"
+}
+
+install_opencode() {
+  install_base_packages
+  info "Installing/updating OpenCode dari installer resmi..."
+  local tmp
+  tmp="$(mktemp)"
+  curl -fsSL --proto '=https' --tlsv1.2 https://opencode.ai/install -o "$tmp"
+  bash "$tmp"
+  rm -f "$tmp"
+
+  export PATH="$HOME/.opencode/bin:$HOME/.local/bin:/usr/local/bin:$PATH"
+  local ob
+  ob="$(opencode_bin)"
+  [[ -n "$ob" ]] || die "OpenCode installer selesai tetapi command 'opencode' belum ditemukan."
+  ok "OpenCode siap: $("$ob" --version 2>/dev/null || echo installed)"
+  echo "Provider OpenCode dikonfigurasi dari TUI: jalankan 'opencode' lalu /connect."
+}
+
+update_opencode() {
+  local ob
+  ob="$(opencode_bin)"
+  if [[ -n "$ob" ]] && "$ob" upgrade; then
+    ok "OpenCode update selesai"
+  else
+    install_opencode
+  fi
+}
+
+opencode_status() {
+  local ob
+  ob="$(opencode_bin)"
+  if [[ -z "$ob" ]]; then
+    echo "OpenCode : not-installed"
+    return 1
+  fi
+  echo "OpenCode : $("$ob" --version 2>/dev/null || echo installed)"
+  echo "Binary   : $ob"
+}
+
+opencode_run() {
+  local ob
+  ob="$(opencode_bin)"
+  [[ -n "$ob" ]] || die "OpenCode belum terinstall."
+  shift || true
+  [[ "$#" -gt 0 ]] || die 'Usage: agentstack opencode run "prompt"'
+  exec "$ob" run "$*"
+}
+
+opencode_tui() {
+  local ob dir="${3:-.}"
+  ob="$(opencode_bin)"
+  [[ -n "$ob" ]] || die "OpenCode belum terinstall."
+  exec "$ob" "$dir"
+}
+
+install_openclaw() {
+  install_base_packages
+  info "Installing/updating OpenClaw dari installer resmi..."
+  local tmp
+  tmp="$(mktemp)"
+  curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh -o "$tmp"
+  bash "$tmp" --no-onboard
+  rm -f "$tmp"
+
+  export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+  local cb
+  cb="$(openclaw_bin)"
+  [[ -n "$cb" ]] || die "OpenClaw installer selesai tetapi command 'openclaw' belum ditemukan."
+  ok "OpenClaw siap: $("$cb" --version 2>/dev/null || echo installed)"
+  echo "Onboarding tidak dipaksa otomatis agar provider/token tidak tertukar."
+}
+
+openclaw_onboard() {
+  need_tty
+  local cb
+  cb="$(openclaw_bin)"
+  [[ -n "$cb" ]] || install_openclaw
+  cb="$(openclaw_bin)"
+  cat <<'EOF'
+
+OpenClaw onboarding akan meminta provider/model/channel.
+Kalau Hermes sudah memakai Telegram, JANGAN pakai token bot Telegram yang sama
+untuk OpenClaw. Gunakan bot berbeda atau skip channel dulu.
+
+EOF
+  if command -v loginctl >/dev/null 2>&1; then
+    run_root loginctl enable-linger "$(id -un)" 2>/dev/null || true
+  fi
+
+  "$cb" onboard --install-daemon
+
+  if command -v loginctl >/dev/null 2>&1; then
+    run_root loginctl enable-linger "$(id -un)" 2>/dev/null || true
+  fi
+
+  "$cb" gateway status || true
+}
+
+openclaw_status() {
+  local cb
+  cb="$(openclaw_bin)"
+  if [[ -z "$cb" ]]; then
+    echo "OpenClaw : not-installed"
+    return 1
+  fi
+  echo "OpenClaw : $("$cb" --version 2>/dev/null || echo installed)"
+  echo "Binary   : $cb"
+  echo
+  "$cb" gateway status 2>/dev/null || true
+}
+
+openclaw_doctor() {
+  local cb
+  cb="$(openclaw_bin)"
+  [[ -n "$cb" ]] || die "OpenClaw belum terinstall."
+  exec "$cb" doctor
+}
+
+openclaw_update() {
+  local cb
+  cb="$(openclaw_bin)"
+  if [[ -n "$cb" ]] && "$cb" update --channel stable; then
+    ok "OpenClaw update selesai"
+  else
+    install_openclaw
+  fi
+}
+
+openclaw_gateway() {
+  local action="$1" cb
+  cb="$(openclaw_bin)"
+  [[ -n "$cb" ]] || die "OpenClaw belum terinstall."
+  "$cb" gateway "$action"
+}
+
+
+cleanup_legacy_stack() {
+  # Remove obsolete Hermes skills unconditionally; these are managed by the old v1.4 stack.
+  rm -rf \
+    "$HERMES_HOME/skills/research/genspark" \
+    "$HERMES_HOME/skills/infrastructure/router9" \
+    "$HERMES_HOME/skills/infrastructure/ai-stack"
+
+  if [[ -r /dev/tty && -w /dev/tty ]]; then
+    if [[ -e /usr/local/bin/hermestools || -d /usr/local/share/hermestools ]]; then
+      if confirm "Hapus manager lama HermesTools (9Router/Genspark)?" "Y"; then
+        run_root rm -f /usr/local/bin/hermestools
+        run_root rm -rf /usr/local/share/hermestools
+        ok "HermesTools lama dibersihkan"
+      fi
+    fi
+
+    if command -v docker >/dev/null 2>&1 && \
+       run_root docker inspect 9router >/dev/null 2>&1; then
+      if confirm "Stop + hapus container 9Router lama? Data ~/.9router tetap disimpan." "Y"; then
+        run_root docker rm -f 9router >/dev/null
+        ok "Container 9Router lama dihapus; data ~/.9router tetap ada"
+      fi
+    fi
+  fi
+}
+
+install_skills() {
+  local hb
+  hb="$(hermes_bin)"
+  [[ -n "$hb" ]] || { warn "Hermes belum ada; skill integration dilewati."; return 0; }
+  [[ -d "$SKILL_SRC" ]] || { warn "Skill source tidak ditemukan: $SKILL_SRC"; return 0; }
+
+  mkdir -p "$HERMES_HOME/skills/coding" "$HERMES_HOME/skills/infrastructure"
+  rm -rf \
+    "$HERMES_HOME/skills/coding/opencode" \
+    "$HERMES_HOME/skills/infrastructure/openclaw" \
+    "$HERMES_HOME/skills/infrastructure/multi-agent" \
+    "$HERMES_HOME/skills/research/genspark" \
+    "$HERMES_HOME/skills/infrastructure/router9" \
+    "$HERMES_HOME/skills/infrastructure/ai-stack"
+
+  cp -a "$SKILL_SRC/coding/opencode" "$HERMES_HOME/skills/coding/"
+  cp -a "$SKILL_SRC/infrastructure/openclaw" "$HERMES_HOME/skills/infrastructure/"
+  cp -a "$SKILL_SRC/infrastructure/multi-agent" "$HERMES_HOME/skills/infrastructure/"
+
+  ok "Hermes skills installed: opencode, openclaw, multi-agent"
+  echo "Gunakan /reset atau session baru di Hermes agar skill index direfresh."
+}
+
+setup_all() {
+  banner
+  install_base_packages
+  install_hermes
+  install_opencode
+  install_openclaw
+  cleanup_legacy_stack
+  install_skills
+
+  echo
+  ok "Hermes + OpenCode + OpenClaw terinstall"
+  echo "Provider Hermes lama tetap tidak diubah."
+  echo "OpenCode provider: jalankan 'opencode' lalu /connect."
+  echo "OpenClaw onboarding: agentstack openclaw onboard"
+  echo
+
+  if [[ -r /dev/tty && -w /dev/tty ]] && confirm "Jalankan onboarding OpenClaw sekarang?" "N"; then
+    openclaw_onboard
+  fi
+}
+
+status_all() {
+  banner
+  local hb
+  hb="$(hermes_bin)"
+  if [[ -n "$hb" ]]; then
+    echo "Hermes   : $("$hb" --version 2>/dev/null | head -n1 || echo installed)"
+    if command -v systemctl >/dev/null 2>&1; then
+      echo "Gateway  : $(systemctl is-active hermes-gateway.service 2>/dev/null || echo unknown)"
+    fi
+  else
+    echo "Hermes   : not-installed"
+  fi
+  echo
+  opencode_status || true
+  echo
+  openclaw_status || true
+}
+
+doctor() {
+  local failed=0 hb ob cb
+  echo "HermesLaunch Multi-Agent Doctor"
+  echo "────────────────────────────────"
+  hb="$(hermes_bin)"
+  ob="$(opencode_bin)"
+  cb="$(openclaw_bin)"
+
+  [[ -n "$hb" ]] && echo "✓ Hermes" || { echo "! Hermes missing"; failed=1; }
+  [[ -n "$ob" ]] && echo "✓ OpenCode" || { echo "! OpenCode missing"; failed=1; }
+  [[ -n "$cb" ]] && echo "✓ OpenClaw" || { echo "! OpenClaw missing"; failed=1; }
+
+  if [[ -n "$hb" ]]; then
+    "$hb" config check >/dev/null 2>&1 && echo "✓ Hermes config" || { echo "! Hermes config failed"; failed=1; }
+  fi
+
+  [[ -f "$HERMES_HOME/skills/coding/opencode/SKILL.md" ]] \
+    && echo "✓ Hermes OpenCode skill" || echo "! Hermes OpenCode skill missing"
+  [[ -f "$HERMES_HOME/skills/infrastructure/openclaw/SKILL.md" ]] \
+    && echo "✓ Hermes OpenClaw skill" || echo "! Hermes OpenClaw skill missing"
+
+  return "$failed"
+}
+
+opencode_menu() {
+  need_tty
+  local c
+  while true; do
+    echo
+    echo "OpenCode"
+    echo "1. Install / repair"
+    echo "2. Update"
+    echo "3. Status"
+    echo "4. Open TUI"
+    echo "5. Back"
+    printf "Pilih [1-5]: " > /dev/tty
+    IFS= read -r c < /dev/tty || true
+    case "$c" in
+      1) install_opencode ;;
+      2) update_opencode ;;
+      3) opencode_status || true ;;
+      4) opencode_tui opencode tui . ;;
+      5|"") return ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+  done
+}
+
+openclaw_menu() {
+  need_tty
+  local c
+  while true; do
+    echo
+    echo "OpenClaw"
+    echo "1. Install / repair"
+    echo "2. Onboard + install daemon"
+    echo "3. Status"
+    echo "4. Doctor"
+    echo "5. Gateway start"
+    echo "6. Gateway restart"
+    echo "7. Gateway stop"
+    echo "8. Update stable"
+    echo "9. Back"
+    printf "Pilih [1-9]: " > /dev/tty
+    IFS= read -r c < /dev/tty || true
+    case "$c" in
+      1) install_openclaw ;;
+      2) openclaw_onboard ;;
+      3) openclaw_status || true ;;
+      4) openclaw_doctor ;;
+      5) openclaw_gateway start ;;
+      6) openclaw_gateway restart ;;
+      7) openclaw_gateway stop ;;
+      8) openclaw_update ;;
+      9|"") return ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+  done
+}
+
+main_menu() {
+  need_tty
+  local c
+  while true; do
+    banner
+    echo "1. Setup / repair ALL"
+    echo "2. Status ALL"
+    echo "3. OpenCode Manager"
+    echo "4. OpenClaw Manager"
+    echo "5. Refresh Hermes skills"
+    echo "6. Doctor"
+    echo "7. Exit"
+    printf "Pilih [1-7]: " > /dev/tty
+    IFS= read -r c < /dev/tty || true
+    case "$c" in
+      1) setup_all ;;
+      2) status_all ;;
+      3) opencode_menu ;;
+      4) openclaw_menu ;;
+      5) install_skills ;;
+      6) doctor || true ;;
+      7|"") return ;;
+      *) echo "Pilihan tidak valid." ;;
+    esac
+    printf "\nTekan Enter..." > /dev/tty
+    IFS= read -r _ < /dev/tty || true
+  done
+}
+
+help_text() {
+  cat <<'EOF'
+HermesLaunch Multi-Agent Stack
+
+Usage:
+  agentstack
+  agentstack setup
+  agentstack status
+  agentstack doctor
+  agentstack skills
+
+OpenCode:
+  agentstack opencode install
+  agentstack opencode update
+  agentstack opencode status
+  agentstack opencode tui [DIR]
+  agentstack opencode run "PROMPT"
+
+OpenClaw:
+  agentstack openclaw install
+  agentstack openclaw onboard
+  agentstack openclaw status
+  agentstack openclaw doctor
+  agentstack openclaw start
+  agentstack openclaw restart
+  agentstack openclaw stop
+  agentstack openclaw update
+
+Notes:
+  - Hermes tetap agent Telegram utama kalau kamu mau.
+  - OpenCode adalah coding CLI/automation tool.
+  - OpenClaw adalah runtime/Gateway terpisah.
+  - Jangan reuse token bot Telegram yang sama di Hermes dan OpenClaw.
+EOF
+}
+
+case "${1:-menu}" in
+  menu|"") main_menu ;;
+  setup|install|all) setup_all ;;
+  status) status_all ;;
+  doctor) doctor ;;
+  skills) install_skills ;;
+  opencode)
+    case "${2:-menu}" in
+      menu|"") opencode_menu ;;
+      install|repair) install_opencode ;;
+      update|upgrade) update_opencode ;;
+      status) opencode_status ;;
+      run)
+        shift
+        opencode_run "$@"
+        ;;
+      tui|open) opencode_tui opencode tui "${3:-.}" ;;
+      *) help_text; exit 2 ;;
+    esac
+    ;;
+  openclaw|claw)
+    case "${2:-menu}" in
+      menu|"") openclaw_menu ;;
+      install|repair) install_openclaw ;;
+      onboard|setup) openclaw_onboard ;;
+      status) openclaw_status ;;
+      doctor) openclaw_doctor ;;
+      start) openclaw_gateway start ;;
+      restart) openclaw_gateway restart ;;
+      stop) openclaw_gateway stop ;;
+      update|upgrade) openclaw_update ;;
+      *) help_text; exit 2 ;;
+    esac
+    ;;
+  version) echo "agentstack v$STACK_VERSION" ;;
+  help|-h|--help) help_text ;;
+  *) help_text; exit 2 ;;
+esac

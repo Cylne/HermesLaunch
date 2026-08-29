@@ -1,6 +1,26 @@
 # Changelog
 
-## v1.4.2 — ShellCheck SC2295 Fix
+## v1.5.0 — Multi-Agent Edition
+
+### Changed
+- Removed 9Router from the default setup flow.
+- Removed Genspark from the default setup flow.
+- Replaced the old All-In stack with `agentstack`.
+
+### Added
+- OpenCode install/repair/update/status/TUI/run manager.
+- OpenClaw install/repair/onboarding/status/doctor/Gateway lifecycle/update manager.
+- `bootstrap-agents.sh` for an existing Hermes VPS.
+- `hermeslaunch agents` shortcut.
+- Hermes skills: `opencode`, `openclaw`, `multi-agent`.
+- `libatomic1` to Ubuntu/Debian VPS prerequisites.
+
+### Safety
+- Existing Hermes providers are preserved.
+- OpenClaw provider/channel onboarding is not silently automated.
+- Do not use the same Telegram bot token in Hermes and OpenClaw simultaneously.
+
+## v1.5.0 — ShellCheck SC2295 Fix
 
 ### Fixed
 - Fixed ShellCheck SC2295 in `scripts/set-repo.sh`.
@@ -14,7 +34,7 @@
 - Genspark integration unchanged.
 - Existing providers remain preserved.
 
-## v1.4.2 — GitHub CI Permission Fix
+## v1.5.0 — GitHub CI Permission Fix
 
 ### Fixed
 - Repository self-test no longer executes `toolbox/hermestools` directly.
@@ -28,7 +48,7 @@
 - No Genspark authentication changes.
 - Existing Hermes providers remain preserved.
 
-## v1.4.2 — All-In AI Stack
+## v1.5.0 — All-In AI Stack
 
 ### Added
 - `bootstrap-tools.sh` for existing Hermes VPS installations.
@@ -42,7 +62,7 @@
 - Genspark generated skill reference sync with `gsk init-skills`.
 - Hermes skills: `genspark`, `router9`, `ai-stack`.
 - Hermes config/.env backup and rollback on failed provider configuration.
-- `hermeslaunch tools` shortcut on new v1.4.2 VPS installs.
+- `hermeslaunch tools` shortcut on new v1.5.0 VPS installs.
 
 ### Security
 - 9Router defaults to `127.0.0.1:20128`.
@@ -50,7 +70,7 @@
 - Genspark API key is stored locally with mode 600 and never echoed.
 - Unrelated VPS services/projects are not touched.
 
-## [1.4.2] - 2026-08-28
+## [1.5.0] - 2026-08-28
 
 ### Added
 - HermesLaunch Provider Manager for VPS and Termux.

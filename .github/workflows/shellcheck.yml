@@ -19,14 +19,15 @@ jobs:
         run: |
           bash -n install.sh
           bash -n bootstrap.sh
-          bash -n bootstrap-tools.sh
+          bash -n bootstrap-agents.sh
           bash -n install-vps.sh
           bash -n install-termux.sh
-          bash -n toolbox/install-ai-stack.sh
-          bash -n toolbox/hermestools
+          bash -n agentstack/install-agentstack.sh
+          bash -n agentstack/agentstack
           bash -n scripts/selftest.sh
           bash -n scripts/set-repo.sh
           bash -n scripts/release.sh
+
       - name: Repository self-test
         run: bash scripts/selftest.sh
 

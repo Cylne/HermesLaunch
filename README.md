@@ -6,7 +6,7 @@
 
 **One repository — two intentionally different runtime modes.**
 
-[![Version](https://img.shields.io/badge/version-1.4.2-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/Cylne/HermesLaunch/releases)
 [![VPS](https://img.shields.io/badge/VPS-systemd-success.svg)](https://github.com/Cylne/HermesLaunch)
 [![Termux](https://img.shields.io/badge/Android-Termux-black.svg)](docs/TERMUX.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -477,120 +477,120 @@ Created by **Reii**
 
 </div>
 
+
 ---
 
-# 🧠 All-In AI Stack — 9Router + Genspark + Hermes Skills
+# 🤖 Multi-Agent Stack — Hermes + OpenCode + OpenClaw
 
-HermesLaunch v1.4.2 menambahkan **AI Stack installer** untuk VPS.
+HermesLaunch v1.5.0 menyederhanakan stack menjadi tiga tool yang jelas:
 
 ```text
 Telegram
    ↓
-Hermes
-   ├── Existing providers (tetap utuh)
-   ├── custom:9router
-   │      └── OpenAI-compatible model gateway
-   │
-   └── Genspark toolbox
-          └── search / crawl / generated GSK skill reference
+Hermes Agent
+   └── optional coding delegation → OpenCode
+
+OpenClaw
+   └── optional separate Gateway / agent runtime
 ```
 
-Fresh VPS install also offers the All-In stack automatically at the end of the normal HermesLaunch wizard.
-
-## Untuk Hermes yang sudah terinstall
-
-Setelah repository v1.4.2 dipublish:
+## Fresh VPS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-tools.sh | bash
+bash install.sh
+```
+
+Setelah Hermes selesai, wizard menawarkan:
+
+```text
+Install OpenCode + OpenClaw manager juga? [Y/n]
+```
+
+## Hermes sudah terinstall
+
+Setelah v1.5.0 dipublish:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Cylne/HermesLaunch/main/bootstrap-agents.sh | bash
 ```
 
 Atau dari clone/ZIP:
 
 ```bash
-bash toolbox/install-ai-stack.sh
-```
-
-Installer otomatis:
-
-- backup config Hermes
-- install/repair Docker
-- deploy 9Router dengan binding **127.0.0.1:20128**
-- persistent data di `~/.9router`
-- install/update `@genspark/cli`
-- install command `hermestools`
-- install Hermes skills `genspark`, `router9`, `ai-stack`
-- sync reference docs dari `gsk init-skills`
-- health check
-- guided 9Router → Hermes linking
-- guided Genspark authentication
-- tidak mengganti provider aktif kecuali user menyetujuinya
-
-## External authentication yang tetap membutuhkan user
-
-Installer tidak mencoba membypass login/OAuth atau mengedit database internal provider.
-
-**9Router:** buka dashboard lewat SSH tunnel, Connect provider, lalu copy API key.
-
-```bash
-hermestools router dashboard
-```
-
-**Genspark:** pilih login resmi atau API key.
-
-```bash
-hermestools genspark auth
+bash agentstack/install-agentstack.sh
 ```
 
 ## Manager
 
 ```bash
-hermestools
-hermestools status
-hermestools doctor
-
-hermestools router status
-hermestools router models
-hermestools router link
-hermestools router use MODEL_ID
-
-hermestools genspark auth
-hermestools genspark test
-hermestools genspark sync
-hermestools genspark search "latest AI agents"
+agentstack
 ```
 
-Jika HermesLaunch v1.4.2 manager sudah terpasang:
+Menu:
+
+```text
+1. Setup / repair ALL
+2. Status ALL
+3. OpenCode Manager
+4. OpenClaw Manager
+5. Refresh Hermes skills
+6. Doctor
+7. Exit
+```
+
+Direct commands:
 
 ```bash
-hermeslaunch tools
+agentstack status
+agentstack doctor
+
+agentstack opencode install
+agentstack opencode update
+agentstack opencode status
+agentstack opencode run "Explain this repository"
+
+agentstack openclaw install
+agentstack openclaw onboard
+agentstack openclaw status
+agentstack openclaw doctor
+agentstack openclaw start
+agentstack openclaw restart
+agentstack openclaw stop
+agentstack openclaw update
 ```
 
-## Telegram / Hermes skills
+Shortcut dari HermesLaunch:
 
-Setelah setup, buat session baru atau jalankan:
+```bash
+hermeslaunch agents
+```
+
+## Pembagian fungsi
+
+- **Hermes**: agent utama + Telegram + provider manager lama.
+- **OpenCode**: coding agent CLI. Buka `opencode`, lalu gunakan `/connect` untuk provider.
+- **OpenClaw**: runtime/Gateway agent terpisah. Onboarding hanya dijalankan saat diperlukan.
+
+Jangan menggunakan token Telegram bot yang sama untuk Hermes dan OpenClaw secara bersamaan.
+
+## Hermes skills
 
 ```text
-/reset
+/opencode
+/openclaw
+/multi-agent
 ```
 
-Skill yang tersedia:
-
-```text
-/genspark
-/router9
-/ai-stack
-```
-
-> 9Router diposisikan sebagai **provider/gateway**, sedangkan Genspark diposisikan
-> sebagai **external toolbox**. Keduanya tidak menghapus provider Hermes yang sudah ada.
+Setelah install skill, jalankan `/reset` atau buat session baru di Hermes.
 
 
+## Migrasi dari v1.4.x
 
-## GitHub upload / executable-bit compatibility
+Saat `agentstack setup`, jika stack lama terdeteksi, wizard menawarkan:
 
-HermesLaunch v1.4.2 does not require GitHub to preserve the executable bit for
-repository validation. CI invokes repository scripts through `bash`; the actual
-installer applies executable permissions when commands are installed into
-`/usr/local/bin`.
+- hapus command/share `hermestools` lama;
+- stop + remove container Docker `9router`;
+- **tidak menghapus** data `~/.9router`.
+
+Jadi backup/config lama tetap tersedia kalau sewaktu-waktu dibutuhkan.
 

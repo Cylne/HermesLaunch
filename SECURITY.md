@@ -35,12 +35,10 @@ Jangan kirim `.env`, bot token, API key, private key, password VPS, atau Hermes 
 Credits: Reii
 
 
-## All-In AI Stack
 
-- 9Router binds to `127.0.0.1:20128` by default.
-- Use an SSH tunnel for the dashboard; do not expose it publicly for convenience.
-- Genspark credentials are never stored in the repository.
-- `hermestools router link` backs up Hermes config before changes.
-- Existing providers are preserved.
-- Do not publish `~/.hermes/.env`, `~/.config/hermestools/gsk_api_key`,
-  `~/.9router`, or Hermes backups.
+## Multi-Agent stack
+
+- OpenCode and OpenClaw credentials are not stored in this repository.
+- Existing Hermes providers remain separate.
+- Do not reuse one Telegram bot token in two simultaneously running agent gateways.
+- Review official installer output before granting elevated access.

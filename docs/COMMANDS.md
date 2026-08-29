@@ -59,29 +59,27 @@ hermeslaunch provider remove [slug]
 Removal is confirmation-gated and creates a config backup first.
 
 
-## All-In AI Stack
+
+## Multi-Agent Stack
 
 ```bash
-hermestools
-hermestools setup
-hermestools status
-hermestools doctor
+agentstack
+agentstack setup
+agentstack status
+agentstack doctor
+agentstack skills
 
-hermestools router install
-hermestools router dashboard
-hermestools router link
-hermestools router models
-hermestools router use MODEL_ID
-hermestools router status
-hermestools router logs 100
-hermestools router restart
-hermestools router update
+agentstack opencode install
+agentstack opencode update
+agentstack opencode status
+agentstack opencode run "prompt"
 
-hermestools genspark install
-hermestools genspark auth
-hermestools genspark test
-hermestools genspark sync
-hermestools genspark search "query"
-
-hermestools skills refresh
+agentstack openclaw install
+agentstack openclaw onboard
+agentstack openclaw status
+agentstack openclaw doctor
+agentstack openclaw start
+agentstack openclaw restart
+agentstack openclaw stop
+agentstack openclaw update
 ```
